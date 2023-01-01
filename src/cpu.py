@@ -20,16 +20,28 @@ class AddressingMode(Enum):
 
 class MOS6502:
     def __init__(self) -> None:
-        # The Rgisters
+        # The Registers
         self.r_program_counter = np.uint16(0)
         self.r_stack_pointer = np.uint8(0)
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
+        '''
+        self.r_status = {
+            'flagC': False,
+            'flagZ': False,
+            'flagI': False,
+            'flagD': False,
+            'flagB': False,
+            'flagV': False,
+            'flagN': False
+            }
+        '''
         self.r_status = np.uint8(0) # NV B*B* DIZC, B* == Break
         self.memory = None
-        self.quit = False
+        self.break_flag = False
 
+        # TODO: Add number of cycles to each command.
         self.lookup_table = {
             0x69: [self.ADC, AddressingMode.IMMEDIATE, 'ADC'],
             0x65: [self.ADC, AddressingMode.ZERO_PAGE, 'ADC'],
@@ -258,48 +270,18 @@ class MOS6502:
             except:
                 pass
 
-            if self.quit == True:
+            if self.break_flag == True:
                 break
-            '''
-            match opcode:
-                case 0x29:
-                    self.AND(AddressingMode.IMMEDIATE)
-                    self.r_program_counter += 1
 
-                case 0x25:
-                    self.AND(AddressingMode.ZERO_PAGE)
-                    self.r_program_counter += 1
+    def reset(self) -> None:
+        self.r_program_counter = self.ram.read_u16(0xFFFC)
+        self.r_stack_pointer = np.uint8(0)
+        self.r_accumulator = np.uint8(0)
+        self.r_index_X = np.uint8(0)
+        self.r_index_Y = np.uint8(0)
+        self.r_status = np.uint8(0)
 
-                case 0xA9:
-                    self.LDA(AddressingMode.IMMEDIATE)
-                    self.r_program_counter += 1
-                
-                case 0xA5:
-                    self.LDA(AddressingMode.ZERO_PAGE)
-                    self.r_program_counter += 1
-
-                case 0xAD:
-                    self.LDA(AddressingMode.ABSOLUTE)
-                    self.r_program_counter += 2
-
-                case 0xAA:
-                    self.r_index_X = self.r_accumulator
-                    self.r_program_counter += 1
-                    self.update_zero_and_negative_flags(self.r_index_X)
-
-                case 0x85:
-                    self.STA(AddressingMode.ZERO_PAGE)
-                    self.program_counter += 1
-
-                case 0x95:
-                    self.STA(AddressingMode.ZERO_PAGE_X)
-                    self.program_counter += 1
-
-                case 0x00:
-                    # Force Interupt
-                    print('Exiting Program')
-                    break
-            '''
+        self.break_flag = False
 
     def get_operand_address(self, mode: AddressingMode) -> np.uint16:
         match mode:
@@ -329,14 +311,13 @@ class MOS6502:
                 return base + self.r_index_Y.astype(np.uint16) # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.INDIRECT:
-                NotImplementedError
+                raise NotImplementedError
 
             case AddressingMode.INDIRECT_X:
                 base = self.ram.read(self.r_program_counter)
                 ptr = base + self.r_index_X # Wrapping Add (may throw overflow exception)
                 lo = self.ram.read(ptr.astype(np.uint16))
                 hi = self.ram.read((ptr + np.uint8(1)).astype(np.uint16)) # Wrapping Add (may throw overflow exception)
-
                 return np.uint16(hi) << 8 | np.uint16(lo)
 
 
@@ -350,11 +331,11 @@ class MOS6502:
                 return np.uint16(deref_base) + np.uint16(self.r_index_Y) # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.IMPLICIT:
-                NotImplementedError
+                raise NotImplementedError
             case AddressingMode.ACCUMULATOR:
-                NotImplementedError
+                raise NotImplementedError
             case AddressingMode.RELATIVE:
-                NotImplementedError
+                raise NotImplementedError
 
     def update_zero_and_negative_flags(self, register):
         if register == 0:
@@ -369,7 +350,28 @@ class MOS6502:
 
     # Implementation of Instructions
     def ADC(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        a = np.uint16(self.r_accumulator)
+        m = np.uint16(value)
+        c = np.uint16(self.r_status & 0b0000_0001)
+
+        result = a + m + c
+
+        self.r_accumulator = np.uint8(result)
+
+        if result > 255:
+            self.r_status |= 0b0000_0001
+        else:
+            self.r_status &= 0b1111_1110
+
+        if (~(a ^ m) & (a ^ result)) & 0x80:
+            self.r_status |= 0b0100_0000
+        else:
+            self.r_status &= 0b1011_1111
+
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def AND(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -379,10 +381,26 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def ASL(self, mode: AddressingMode):
-        raise NotImplementedError
+        #TODO: Test this method
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        shifted = value << 1
+        if shifted > 255:
+            self.r_status = self.r_status | 0b0000_0001
+
+        if mode == AddressingMode.ACCUMULATOR:
+            self.r_accumulator(np.uint8(shifted))
+        else:
+            self.ram.write(addr, np.uint8(shifted))
+
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def BCC(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        if self.r_status >> 0 == 0:
+            pass
 
     def BCS(self, mode: AddressingMode):
         raise NotImplementedError
@@ -403,7 +421,7 @@ class MOS6502:
         raise NotImplementedError
 
     def BRK(self, mode: AddressingMode):
-        self.quit = True
+        self.break_flag = True
 
     def BVC(self, mode: AddressingMode):
         raise NotImplementedError
@@ -544,16 +562,3 @@ class MOS6502:
 
     def TYA(self, mode: AddressingMode):
         raise NotImplementedError
-    
-
-    
-
-    def reset(self) -> None:
-        self.r_program_counter = self.ram.read_u16(0xFFFC)
-        self.r_stack_pointer = np.uint8(0)
-        self.r_accumulator = np.uint8(0)
-        self.r_index_X = np.uint8(0)
-        self.r_index_Y = np.uint8(0)
-        self.r_status = np.uint8(0)
-
-        self.quit = False
