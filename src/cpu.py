@@ -26,18 +26,16 @@ class MOS6502:
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
-        '''
         self.r_status = {
-            'flagC': False,
-            'flagZ': False,
-            'flagI': False,
-            'flagD': False,
-            'flagB': False,
-            'flagV': False,
-            'flagN': False
+            'flag_C': False,
+            'flag_Z': False,
+            'flag_I': False,
+            'flag_D': False,
+            'flag_B': False,
+            'flag_V': False,
+            'flag_N': False
             }
-        '''
-        self.r_status = np.uint8(0) # NV B*B* DIZC, B* == Break
+        # self.r_status = np.uint8(0) # NV B*B* DIZC, B* == Break
         self.memory = None
         self.break_flag = False
 
@@ -279,7 +277,7 @@ class MOS6502:
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
-        self.r_status = np.uint8(0)
+        self.r_status = dict.fromkeys(self.r_status, False)
 
         self.break_flag = False
 
@@ -338,17 +336,13 @@ class MOS6502:
                 raise NotImplementedError
 
     def update_zero_and_negative_flags(self, register):
-        if register == 0:
-            self.r_status = self.r_status | 0b0000_0010
-        else:
-            self.r_status = self.r_status & 0b1111_1101
+        self.r_status['flag_Z'] = True if register == 0 else False
+        self.r_status['flag_N'] = True if register & 0b1000_0000 != 0 else False
 
-        if register & 0b1000_0000 != 0:
-            self.r_status = self.r_status | 0b1000_0000
-        else:
-            self.r_status = self.r_status & 0b0111_1111
-
+    # ----------------------------------------------------------------
     # Implementation of Instructions
+    # ----------------------------------------------------------------
+
     def ADC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
@@ -361,16 +355,9 @@ class MOS6502:
 
         self.r_accumulator = np.uint8(result)
 
-        if result > 255:
-            self.r_status |= 0b0000_0001
-        else:
-            self.r_status &= 0b1111_1110
-
-        if (~(a ^ m) & (a ^ result)) & 0x80:
-            self.r_status |= 0b0100_0000
-        else:
-            self.r_status &= 0b1011_1111
-
+        # Setting Flags
+        self.r_status['flag_C'] = True if result > 255 else False
+        self.r_status['flag_V'] = True if (~(a ^ m) & (a ^ result)) & 0x80 else False
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def AND(self, mode: AddressingMode):
@@ -385,15 +372,14 @@ class MOS6502:
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
         shifted = value << 1
-        if shifted > 255:
-            self.r_status = self.r_status | 0b0000_0001
+
+        self.r_status['flag_C'] = True if shifted > 255 else False
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
         if mode == AddressingMode.ACCUMULATOR:
             self.r_accumulator(np.uint8(shifted))
         else:
             self.ram.write(addr, np.uint8(shifted))
-
-        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def BCC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -409,7 +395,13 @@ class MOS6502:
         raise NotImplementedError
 
     def BIT(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = self.r_accumulator & value
+
+        self.r_status['flag_Z'] = True if result == 0 else False
+        self.r_status['flag_V'] = bool(result >> 6)
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def BMI(self, mode: AddressingMode):
         raise NotImplementedError
@@ -430,49 +422,90 @@ class MOS6502:
         raise NotImplementedError
 
     def CLC(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_C'] = False
 
     def CLD(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_D'] = False
 
     def CLI(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_I'] = False
 
     def CLV(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_V'] = False
 
     def CMP(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = np.uint8(self.r_accumulator - value)
+
+        self.r_status['flag_C'] = True if self.r_accumulator >= value else False
+        self.r_status['flag_Z'] = True if self.r_accumulator == value else False
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def CPX(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = np.uint8(self.r_index_X - value)
+
+        self.r_status['flag_C'] = True if self.r_index_X >= value else False
+        self.r_status['flag_Z'] = True if self.r_index_X == value else False
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def CPY(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = np.uint8(self.r_index_Y - value)
+
+        self.r_status['flag_C'] = True if self.r_index_Y >= value else False
+        self.r_status['flag_Z'] = True if self.r_index_Y == value else False
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def DEC(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = value - 1
+        self.ram.write(addr, result)
+
+        self.r_status['flag_Z'] = True if result == 0 else False
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def DEX(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_X -= 1
+        self.update_zero_and_negative_flags(self.r_index_X)
 
     def DEY(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_Y -= 1
+        self.update_zero_and_negative_flags(self.r_index_Y)
 
     def EOR(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        self.r_accumulator ^= value
+
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def INC(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        result = value + 1
+        self.ram.write(addr, result)
+
+        self.r_status['flag_Z'] = True if result == 0 else False
+        self.r_status['flag_N'] = bool(result >> 7)
 
     def INX(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_X += 1
+        self.update_zero_and_negative_flags(self.r_index_X)
 
     def INY(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_Y += 1
+        self.update_zero_and_negative_flags(self.r_index_Y)
 
     def JMP(self, mode: AddressingMode):
-        raise NotImplementedError
+        #TODO: There is a bug which needs implementing in this function
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        self.r_program_counter = value
 
     def JSR(self, mode: AddressingMode):
         raise NotImplementedError
@@ -485,19 +518,31 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def LDX(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        self.r_index_X = value
+        self.update_zero_and_negative_flags(self.r_index_X)
 
     def LDY(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        self.r_index_Y = value
+        self.update_zero_and_negative_flags(self.r_index_Y)
 
     def LSR(self, mode: AddressingMode):
         raise NotImplementedError
 
     def NOP(self, mode: AddressingMode):
-        raise NotImplementedError
+        pass
 
     def ORA(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+        self.r_accumulator |= value
+
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PHA(self, mode: AddressingMode):
         raise NotImplementedError
@@ -527,38 +572,44 @@ class MOS6502:
         raise NotImplementedError
 
     def SEC(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_C'] = True
 
     def SED(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_D'] = True
 
     def SEI(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_status['flag_I'] = True
 
     def STA(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         self.ram.write(addr, self.r_accumulator)
 
     def STX(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        self.ram.write(addr, self.r_index_X)
 
     def STY(self, mode: AddressingMode):
-        raise NotImplementedError
+        addr = self.get_operand_address(mode)
+        self.ram.write(addr, self.r_index_Y)
 
     def TAX(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_X = self.r_accumulator
+        self.update_zero_and_negative_flags(self.r_index_X)
 
     def TAY(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_index_Y = self.r_accumulator
+        self.update_zero_and_negative_flags(self.r_index_Y)
 
     def TSX(self, mode: AddressingMode):
         raise NotImplementedError
 
     def TXA(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_accumulator = self.r_index_X
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def TXS(self, mode: AddressingMode):
         raise NotImplementedError
 
     def TYA(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_accumulator = self.r_index_Y
+        self.update_zero_and_negative_flags(self.r_accumulator)
