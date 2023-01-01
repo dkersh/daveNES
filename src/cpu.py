@@ -28,6 +28,7 @@ class MOS6502:
         self.r_index_Y = np.uint8(0)
         self.r_status = np.uint8(0) # NV B*B* DIZC, B* == Break
         self.memory = None
+        self.quit = False
 
         self.lookup_table = {
             0x69: [self.ADC, AddressingMode.IMMEDIATE, 'ADC'],
@@ -250,6 +251,16 @@ class MOS6502:
             opcode = self.ram.read(self.r_program_counter) # Code from program
             print(hex(opcode))
             self.r_program_counter += 1
+            f = self.lookup_table[opcode][0]
+            a = self.lookup_table[opcode][1]
+            try:
+                f(a)
+            except:
+                pass
+
+            if self.quit == True:
+                break
+            '''
             match opcode:
                 case 0x29:
                     self.AND(AddressingMode.IMMEDIATE)
@@ -288,6 +299,7 @@ class MOS6502:
                     # Force Interupt
                     print('Exiting Program')
                     break
+            '''
 
     def get_operand_address(self, mode: AddressingMode) -> np.uint16:
         match mode:
@@ -356,16 +368,8 @@ class MOS6502:
             self.r_status = self.r_status & 0b0111_1111
 
     # Implementation of Instructions
-    def LDA(self, mode: AddressingMode):
-        addr = self.get_operand_address(mode)
-        value = self.ram.read(addr)
-
-        self.r_accumulator = value
-        self.update_zero_and_negative_flags(self.r_accumulator)
-
-    def STA(self, mode: AddressingMode):
-        addr = self.get_operand_address(mode)
-        self.ram.write(addr, self.r_accumulator)
+    def ADC(self, mode: AddressingMode):
+        raise NotImplementedError
 
     def AND(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -374,6 +378,176 @@ class MOS6502:
         self.r_accumulator &= value
         self.update_zero_and_negative_flags(self.r_accumulator)
 
+    def ASL(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BCC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BCS(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BEQ(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BIT(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BMI(self, mode: AddressingMode):
+        raise NotImplementedError
+    
+    def BNE(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BPL(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BRK(self, mode: AddressingMode):
+        self.quit = True
+
+    def BVC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def BVS(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CLC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CLD(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CLI(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CLV(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CMP(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CPX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def CPY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def DEC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def DEX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def DEY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def EOR(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def INC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def INX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def INY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def JMP(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def JSR(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def LDA(self, mode: AddressingMode):
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        self.r_accumulator = value
+        self.update_zero_and_negative_flags(self.r_accumulator)
+
+    def LDX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def LDY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def LSR(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def NOP(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def ORA(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def PHA(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def PHP(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def PLA(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def PLP(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def ROL(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def ROR(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def RTI(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def RTS(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def SBC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def SEC(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def SED(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def SEI(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def STA(self, mode: AddressingMode):
+        addr = self.get_operand_address(mode)
+        self.ram.write(addr, self.r_accumulator)
+
+    def STX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def STY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TAX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TAY(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TSX(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TXA(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TXS(self, mode: AddressingMode):
+        raise NotImplementedError
+
+    def TYA(self, mode: AddressingMode):
+        raise NotImplementedError
+    
+
+    
+
     def reset(self) -> None:
         self.r_program_counter = self.ram.read_u16(0xFFFC)
         self.r_stack_pointer = np.uint8(0)
@@ -381,3 +555,5 @@ class MOS6502:
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
         self.r_status = np.uint8(0)
+
+        self.quit = False
