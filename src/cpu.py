@@ -611,5 +611,4 @@ class MOS6502:
         raise NotImplementedError
 
     def TYA(self, mode: AddressingMode):
-        self.r_accumulator = self.r_index_Y
-        self.update_zero_and_negative_flags(self.r_accumulator)
+        raise NotImplementedError
