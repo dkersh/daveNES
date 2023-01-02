@@ -9,7 +9,7 @@ class Program:
     @classmethod
     def from_file(cls, filename: str):
         with open(filename, 'rb') as f:
-            return cls(f.readline().split())
+            return cls(f.read().split())
 
     @classmethod
     def from_array(cls, array: np.ndarray):
