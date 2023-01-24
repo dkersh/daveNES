@@ -281,6 +281,7 @@ class MOS6502:
 
             case AddressingMode.ABSOLUTE_Y:
                 base = self.ram.read_u16(self.r_program_counter)
+                self.r_program_counter += 2
                 return base + self.r_index_Y.astype(
                     np.uint16
                 )  # Wrapping Add (may throw overflow exception)
@@ -322,7 +323,7 @@ class MOS6502:
 
     def stack_pop(self) -> np.uint8:
         self.r_stack_pointer += np.uint8(1)
-        return self.ram.read(np.uint16(0x1000) + self.r_stack_pointer)
+        return self.ram.read(np.uint16(0x1000) + np.uint16(self.r_stack_pointer))
 
     def stack_pop_u16(self) -> np.uint16:
         lo = np.uint16(self.stack_pop())
@@ -332,7 +333,7 @@ class MOS6502:
 
     def stack_push(self, data: np.uint8):
         self.ram.write(np.uint16(0x1000) + np.uint16(self.r_stack_pointer), data)
-        self.r_stack_pointer += np.uint8(1)
+        self.r_stack_pointer -= np.uint8(1)
 
     def stack_push_u16(self, data: np.uint16):
         lo = np.uint8(data & 0xFF)
@@ -591,13 +592,15 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PHA(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.stack_push(self.r_accumulator)
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PHP(self, mode: AddressingMode):
         raise NotImplementedError
 
     def PLA(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_accumulator = self.stack_pop()
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PLP(self, mode: AddressingMode):
         raise NotImplementedError
