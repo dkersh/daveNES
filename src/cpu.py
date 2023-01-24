@@ -23,7 +23,8 @@ class AddressingMode(Enum):
 
 
 class MOS6502:
-    def __init__(self) -> None:
+    def __init__(self, debug=False) -> None:
+        self.debug = debug
         # The Registers
         self.r_program_counter = np.uint16(0)
         self.r_stack_pointer = np.uint8(0)
@@ -210,16 +211,12 @@ class MOS6502:
     def run_program(self) -> None:
 
         while True:
-            print(
-                f"A: {hex(self.r_accumulator)}, "
-                f"X: {hex(self.r_index_X)}, "
-                f"Y: {hex(self.r_index_Y)}, "
-                f"PC: {hex(self.r_program_counter)}, "
-                f"SP: {hex(self.r_stack_pointer)}"
-            )
-            print(f"registers: {self.r_status}")
+            if self.debug:
+                input("Press Button to continue")
+
             opcode = self.ram.read(self.r_program_counter)  # Code from program
             print(self.lookup_table[opcode][2])
+            self.print_system()
 
             self.r_program_counter += 1
             f = self.lookup_table[opcode][0]
@@ -347,6 +344,15 @@ class MOS6502:
         self.r_status["flag_Z"] = True if register == 0 else False
         self.r_status["flag_N"] = True if register & 0b1000_0000 != 0 else False
 
+    def print_system(self) -> None:
+        print(
+            f"PC: {hex(self.r_program_counter)}, "
+            f"SP: {hex(self.r_stack_pointer)}, "
+            f"A: {hex(self.r_accumulator)}, "
+            f"X: {hex(self.r_index_X)}, "
+            f"Y: {hex(self.r_index_Y)}"
+        )
+
     # ----------------------------------------------------------------
     # Implementation of Instructions
     # ----------------------------------------------------------------
@@ -394,21 +400,21 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_C"] == False:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BCS(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_C"]:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BEQ(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_Z"]:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BIT(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -424,7 +430,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_N"]:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BNE(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -438,7 +444,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_N"] == False:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BRK(self, mode: AddressingMode):
         self.break_flag = True
@@ -448,14 +454,14 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_V"] == False:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def BVS(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_V"]:
-            self.r_program_counter += value
+            self.r_program_counter += np.int8(value) + 1
 
     def CLC(self, mode: AddressingMode):
         self.r_status["flag_C"] = False
