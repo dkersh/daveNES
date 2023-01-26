@@ -215,7 +215,7 @@ class MOS6502:
                 input("Press Button to continue")
 
             opcode = self.ram.read(self.r_program_counter)  # Code from program
-            print(self.lookup_table[opcode][2])
+            print(f'{hex(opcode)}, {self.lookup_table[opcode][2]}')
             self.print_system()
 
             self.r_program_counter += 1
@@ -236,6 +236,7 @@ class MOS6502:
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
         self.r_status = dict.fromkeys(self.r_status, False)
+        self.r_status['flag_I'] = True
 
         self.break_flag = False
 
@@ -351,9 +352,10 @@ class MOS6502:
             f"SP: {hex(self.r_stack_pointer)}, "
             f"A: {hex(self.r_accumulator)}, "
             f"X: {hex(self.r_index_X)}, "
-            f"Y: {hex(self.r_index_Y)}"
+            f"Y: {hex(self.r_index_Y)}, "
+            f"{[int(self.r_status[k]) for k in self.r_status.keys()]}"
         )
-
+ 
     # ----------------------------------------------------------------
     # Implementation of Instructions
     # ----------------------------------------------------------------
