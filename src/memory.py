@@ -35,9 +35,9 @@ class Memory:
         return True
 
     def load_program(self, p: Program):
-        self.memory[0x8000 : 0x8000 + len(p.program)] = p.program
+        self.memory[0x0600 : 0x0600 + len(p.program)] = p.program
 
-        return 0x8000
+        return 0x0600
 
     def visualise_memory(self):
         display = np.zeros((32, 32))

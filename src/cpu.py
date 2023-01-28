@@ -205,13 +205,14 @@ class MOS6502:
 
     def load_program(self, program: Program) -> None:
         self.ram.load_program(program)
-        self.ram.write_u16(0xFFFC, 0x8000)  # Write the start of the program to 0xFFFC
+        self.ram.write_u16(0xFFFC, 0x0600)  # Write the start of the program to 0xFFFC
         self.reset()
 
     def run_program(self) -> None:
 
         while True:
             if self.debug:
+                self.ram.visualise_memory()
                 input("Press Button to continue")
 
             opcode = self.ram.read(self.r_program_counter)  # Code from program
@@ -236,7 +237,6 @@ class MOS6502:
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
         self.r_status = dict.fromkeys(self.r_status, False)
-        self.r_status['flag_I'] = True
 
         self.break_flag = False
 
@@ -549,8 +549,7 @@ class MOS6502:
     def JMP(self, mode: AddressingMode):
         # TODO: There is a bug which needs implementing in this function
         addr = self.get_operand_address(mode)
-        value = self.ram.read(addr)
-        self.r_program_counter = value
+        self.r_program_counter = addr
 
     def JSR(self, mode: AddressingMode):
         self.stack_push_u16(
