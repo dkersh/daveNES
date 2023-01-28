@@ -205,34 +205,36 @@ class MOS6502:
 
     def load_program(self, program: Program) -> None:
         self.ram.load_program(program)
-        self.ram.write_u16(0xFFFC, 0x0600)  # Write the start of the program to 0xFFFC
+        self.ram.write_u16(0xFFFC, 0x0600)  # Write the start of the program to addr 0xFFFC
         self.reset()
 
     def run_program(self) -> None:
 
         while True:
+            self.print_system()
+            # Snake writes
+            self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+            self.ram.write(0xff, 0x77) # an input
+            #
             if self.debug:
                 self.ram.visualise_memory()
                 input("Press Button to continue")
 
             opcode = self.ram.read(self.r_program_counter)  # Code from program
             print(f'{hex(opcode)}, {self.lookup_table[opcode][2]}')
-            self.print_system()
+            
 
             self.r_program_counter += 1
             f = self.lookup_table[opcode][0]
             a = self.lookup_table[opcode][1]
-            try:
-                f(a)
-            except:
-                pass
+            f(a) # run the opcode with the specified addressing mode
 
             if self.break_flag == True:
                 break
 
     def reset(self) -> None:
         self.r_program_counter = self.ram.read_u16(0xFFFC)
-        self.r_stack_pointer = np.uint8(0xFD)
+        self.r_stack_pointer = np.uint8(0xFF)
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
@@ -348,11 +350,11 @@ class MOS6502:
 
     def print_system(self) -> None:
         print(
-            f"PC: {hex(self.r_program_counter)}, "
-            f"SP: {hex(self.r_stack_pointer)}, "
-            f"A: {hex(self.r_accumulator)}, "
-            f"X: {hex(self.r_index_X)}, "
-            f"Y: {hex(self.r_index_Y)}, "
+            f"PC: 0x{self.r_program_counter:04x}, "
+            f"SP: 0x{self.r_stack_pointer:02x}, "
+            f"A: 0x{self.r_accumulator:02x}, "
+            f"X: 0x{self.r_index_X:02x}, "
+            f"Y: 0x{self.r_index_Y:02x}, "
             f"{[int(self.r_status[k]) for k in self.r_status.keys()]}"
         )
  
@@ -607,7 +609,20 @@ class MOS6502:
         raise NotImplementedError
 
     def ROL(self, mode: AddressingMode):
-        raise NotImplementedError
+        #TODO: Probably not the correct implementation
+        addr = self.get_operand_address(mode) 
+        value = self.ram.read(addr)
+        old_carry = self.r_status['flag_C']
+
+        if value >> 7 == 1:
+            self.r_status['flag_C'] == True
+        else:
+            self.r_status['flag_C'] == False
+
+        value = value << 1
+        if old_carry:
+            value = value | 1
+        self.ram.write(addr, value)
 
     def ROR(self, mode: AddressingMode):
         raise NotImplementedError
@@ -616,7 +631,8 @@ class MOS6502:
         raise NotImplementedError
 
     def RTS(self, mode: AddressingMode):
-        raise NotImplementedError
+        value = self.stack_pop_u16()
+        self.r_program_counter = value + 1
 
     def SBC(self, mode: AddressingMode):
         raise NotImplementedError
