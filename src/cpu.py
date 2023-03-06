@@ -36,7 +36,8 @@ class MOS6502:
             "flag_Z": False,
             "flag_I": False,
             "flag_D": False,
-            "flag_B": False,
+            "flag_B0": False,
+            "flag_B1": False,
             "flag_V": False,
             "flag_N": False,
         }
@@ -138,7 +139,7 @@ class MOS6502:
             0xB4: [self.LDY, AddressingMode.ZERO_PAGE_X, "LDY"],
             0xAC: [self.LDY, AddressingMode.ABSOLUTE, "LDY"],
             0xBC: [self.LDY, AddressingMode.ABSOLUTE_X, "LDY"],
-            0x4A: [self.LSR, AddressingMode.ACCUMULATOR, "LSR"],
+            0x4A: [self.LSR_accumulator, AddressingMode.ACCUMULATOR, "LSR"],
             0x46: [self.LSR, AddressingMode.ZERO_PAGE, "LSR"],
             0x56: [self.LSR, AddressingMode.ZERO_PAGE_X, "LSR"],
             0x4E: [self.LSR, AddressingMode.ABSOLUTE, "LSR"],
@@ -319,10 +320,16 @@ class MOS6502:
             case AddressingMode.IMPLICIT:
                 raise NotImplementedError
             case AddressingMode.ACCUMULATOR:
+                # TODO: Any time this addressingmode is requested, act directly on Accumulator
                 raise NotImplementedError
             case AddressingMode.RELATIVE:
                 # TODO: Verify this is correct
                 return self.r_program_counter
+    
+    def value_to_status(self, value):
+        for i, f in enumerate(self.r_status):
+            self.r_status[f] = value & (1 << i) != 0
+
 
     def stack_pop(self) -> np.uint8:
         self.r_stack_pointer += np.uint8(1)
@@ -581,9 +588,31 @@ class MOS6502:
         self.r_index_Y = value
         self.update_zero_and_negative_flags(self.r_index_Y)
 
-    def LSR(self, mode: AddressingMode):
-        raise NotImplementedError
+    def LSR_accumulator(self, mode: AddressingMode):
+        value = self.r_accumulator
+        # Setting Flags
+        if value & np.uint8(1) == 1:
+            self.r_status['flag_C'] = True
+        else:
+            self.r_status['flag_C'] = False
+        value = value >> 1
 
+        self.r_accumulator = value
+        self.update_zero_and_negative_flags(self.r_accumulator)
+
+    def LSR(self, mode: AddressingMode):
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        # Setting Flags
+        if value & np.uint8(1) == 1:
+            self.r_status['flag_C'] = True
+        else:
+            self.r_status['flag_C'] = False
+        value = value >> 1
+        self.ram.write(addr, value)
+        self.update_zero_and_negative_flags(value)
+        
     def NOP(self, mode: AddressingMode):
         pass
 
@@ -606,7 +635,8 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PLP(self, mode: AddressingMode):
-        raise NotImplementedError
+        value = self.stack_pop()
+        self.value_to_status(value)
 
     def ROL(self, mode: AddressingMode):
         #TODO: Probably not the correct implementation
@@ -635,7 +665,21 @@ class MOS6502:
         self.r_program_counter = value + 1
 
     def SBC(self, mode: AddressingMode):
-        raise NotImplementedError
+        # A-B = A + (-B) and -B = !B + 1
+        addr = self.get_operand_address(mode)
+        value = self.ram.read(addr)
+
+        a = self.r_accumulator
+        b = np.uint8(value)
+
+        result = a + (~b + np.uint8(1))
+
+        self.r_accumulator = np.uint8(result)
+
+        # Setting Flags
+        self.r_status["flag_C"] = True if result > 255 else False
+        self.r_status["flag_V"] = True if (~(a ^ b) & (a ^ result)) & 0x80 else False
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def SEC(self, mode: AddressingMode):
         self.r_status["flag_C"] = True
