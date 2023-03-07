@@ -22,7 +22,7 @@ class Memory:
         lo = np.uint16(self.read(addr))
         hi = np.uint16(self.read(addr + 1))
 
-        return (hi << 8) | lo
+        return np.uint16((hi << 8) | lo)
 
     def write_u16(self, addr: np.uint16, data: np.uint16) -> bool:
         try:

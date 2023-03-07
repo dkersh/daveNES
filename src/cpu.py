@@ -36,8 +36,8 @@ class MOS6502:
             "flag_Z": False,
             "flag_I": False,
             "flag_D": False,
-            "flag_B0": False,
-            "flag_B1": False,
+            "flag_B0": True,
+            "flag_B1": True,
             "flag_V": False,
             "flag_N": False,
         }
@@ -46,159 +46,159 @@ class MOS6502:
         self.break_flag = False
 
         # TODO: Add number of cycles to each command.
-        # hexcode: [function, addressing mode, number of cycles, string for reference]
+        # hexcode: [function, number of cycles,addressing mode, , string for reference]
         self.lookup_table = {
-            0x69: [self.ADC, AddressingMode.IMMEDIATE, "ADC"],
-            0x65: [self.ADC, AddressingMode.ZERO_PAGE, "ADC"],
-            0x75: [self.ADC, AddressingMode.ZERO_PAGE_X, "ADC"],
-            0x6D: [self.ADC, AddressingMode.ABSOLUTE, "ADC"],
-            0x7D: [self.ADC, AddressingMode.ABSOLUTE_X, "ADC"],
-            0x79: [self.ADC, AddressingMode.ABSOLUTE_Y, "ADC"],
-            0x61: [self.ADC, AddressingMode.INDIRECT_X, "ADC"],
-            0x71: [self.ADC, AddressingMode.INDIRECT_Y, "ADC"],
-            0x29: [self.AND, AddressingMode.IMMEDIATE, "AND"],
-            0x25: [self.AND, AddressingMode.ZERO_PAGE, "AND"],
-            0x35: [self.AND, AddressingMode.ZERO_PAGE_X, "AND"],
-            0x2D: [self.AND, AddressingMode.ABSOLUTE, "AND"],
-            0x3D: [self.AND, AddressingMode.ABSOLUTE_X, "AND"],
-            0x39: [self.AND, AddressingMode.ABSOLUTE_Y, "AND"],
-            0x21: [self.AND, AddressingMode.INDIRECT_X, "AND"],
-            0x31: [self.AND, AddressingMode.INDIRECT_Y, "AND"],
-            0x0A: [self.ASL, AddressingMode.ACCUMULATOR, "ASL"],
-            0x06: [self.ASL, AddressingMode.ZERO_PAGE, "ASL"],
-            0x16: [self.ASL, AddressingMode.ZERO_PAGE_X, "ASL"],
-            0x0E: [self.ASL, AddressingMode.ABSOLUTE, "ASL"],
-            0x1E: [self.ASL, AddressingMode.ABSOLUTE_X, "ASL"],
-            0x90: [self.BCC, AddressingMode.RELATIVE, "BCC"],
-            0xB0: [self.BCS, AddressingMode.RELATIVE, "BCS"],
-            0xF0: [self.BEQ, AddressingMode.RELATIVE, "BEQ"],
-            0x24: [self.BIT, AddressingMode.ZERO_PAGE, "BIT"],
-            0x2C: [self.BIT, AddressingMode.ABSOLUTE, "BIT"],
-            0x30: [self.BMI, AddressingMode.RELATIVE, "BMI"],
-            0xD0: [self.BNE, AddressingMode.RELATIVE, "BNE"],
-            0x10: [self.BPL, AddressingMode.RELATIVE, "BPL"],
-            0x00: [self.BRK, None, "BRK"],
-            0x50: [self.BVC, AddressingMode.RELATIVE, "BVC"],
-            0x70: [self.BVS, AddressingMode.RELATIVE, "BVS"],
-            0x18: [self.CLC, None, "CLC"],
-            0xD8: [self.CLD, None, "CLD"],
-            0x58: [self.CLI, None, "CLI"],
-            0xB8: [self.CLV, None, "CLV"],
-            0xC9: [self.CMP, AddressingMode.IMMEDIATE, "CMP"],
-            0xC5: [self.CMP, AddressingMode.ZERO_PAGE, "CMP"],
-            0xD5: [self.CMP, AddressingMode.ZERO_PAGE_X, "CMP"],
-            0xCD: [self.CMP, AddressingMode.ABSOLUTE, "CMP"],
-            0xDD: [self.CMP, AddressingMode.ABSOLUTE_X, "CMP"],
-            0xD9: [self.CMP, AddressingMode.ABSOLUTE_Y, "CMP"],
-            0xC1: [self.CMP, AddressingMode.INDIRECT_X, "CMP"],
-            0xD1: [self.CMP, AddressingMode.INDIRECT_Y, "CMP"],
-            0xE0: [self.CPX, AddressingMode.IMMEDIATE, "CPX"],
-            0xE4: [self.CPX, AddressingMode.ZERO_PAGE, "CPX"],
-            0xEC: [self.CPX, AddressingMode.ABSOLUTE, "CPX"],
-            0xC0: [self.CPY, AddressingMode.IMMEDIATE, "CPY"],
-            0xC4: [self.CPY, AddressingMode.ZERO_PAGE, "CPY"],
-            0xCC: [self.CPY, AddressingMode.ABSOLUTE, "CPY"],
-            0xC6: [self.DEC, AddressingMode.ZERO_PAGE, "DEC"],
-            0xD6: [self.DEC, AddressingMode.ZERO_PAGE_X, "DEC"],
-            0xCE: [self.DEC, AddressingMode.ABSOLUTE, "DEC"],
-            0xDE: [self.DEC, AddressingMode.ABSOLUTE_X, "DEC"],
-            0xCA: [self.DEX, None, "DEX"],
-            0x88: [self.DEY, None, "DEY"],
-            0x49: [self.EOR, AddressingMode.IMMEDIATE, "EOR"],
-            0x45: [self.EOR, AddressingMode.ZERO_PAGE, "EOR"],
-            0x55: [self.EOR, AddressingMode.ZERO_PAGE_X, "EOR"],
-            0x4D: [self.EOR, AddressingMode.ABSOLUTE, "EOR"],
-            0x5D: [self.EOR, AddressingMode.ABSOLUTE_X, "EOR"],
-            0x59: [self.EOR, AddressingMode.ABSOLUTE_Y, "EOR"],
-            0x41: [self.EOR, AddressingMode.INDIRECT_X, "EOR"],
-            0x51: [self.EOR, AddressingMode.INDIRECT_Y, "EOR"],
-            0xE6: [self.INC, AddressingMode.ZERO_PAGE, "INC"],
-            0xF6: [self.INC, AddressingMode.ZERO_PAGE_X, "INC"],
-            0xEE: [self.INC, AddressingMode.ABSOLUTE, "INC"],
-            0xFE: [self.INC, AddressingMode.ABSOLUTE_X, "INC"],
-            0xE8: [self.INX, None, "INX"],
-            0xC8: [self.INY, None, "INY"],
-            0x4C: [self.JMP, AddressingMode.ABSOLUTE, "JMP"],
-            0x6C: [self.JMP, AddressingMode.INDIRECT, "JMP"],
-            0x20: [self.JSR, AddressingMode.ABSOLUTE, "JSR"],
-            0xA9: [self.LDA, AddressingMode.IMMEDIATE, "LDA"],
-            0xA5: [self.LDA, AddressingMode.ZERO_PAGE, "LDA"],
-            0xB5: [self.LDA, AddressingMode.ZERO_PAGE_X, "LDA"],
-            0xAD: [self.LDA, AddressingMode.ABSOLUTE, "LDA"],
-            0xBD: [self.LDA, AddressingMode.ABSOLUTE_X, "LDA"],
-            0xB9: [self.LDA, AddressingMode.ABSOLUTE_Y, "LDA"],
-            0xA1: [self.LDA, AddressingMode.INDIRECT_X, "LDA"],
-            0xB1: [self.LDA, AddressingMode.INDIRECT_Y, "LDA"],
-            0xA2: [self.LDX, AddressingMode.IMMEDIATE, "LDX"],
-            0xA6: [self.LDX, AddressingMode.ZERO_PAGE, "LDX"],
-            0xB6: [self.LDX, AddressingMode.ZERO_PAGE_Y, "LDX"],
-            0xAE: [self.LDX, AddressingMode.ABSOLUTE, "LDX"],
-            0xBE: [self.LDX, AddressingMode.ABSOLUTE_Y, "LDX"],
-            0xA0: [self.LDY, AddressingMode.IMMEDIATE, "LDY"],
-            0xA4: [self.LDY, AddressingMode.ZERO_PAGE, "LDY"],
-            0xB4: [self.LDY, AddressingMode.ZERO_PAGE_X, "LDY"],
-            0xAC: [self.LDY, AddressingMode.ABSOLUTE, "LDY"],
-            0xBC: [self.LDY, AddressingMode.ABSOLUTE_X, "LDY"],
-            0x4A: [self.LSR_accumulator, AddressingMode.ACCUMULATOR, "LSR"],
-            0x46: [self.LSR, AddressingMode.ZERO_PAGE, "LSR"],
-            0x56: [self.LSR, AddressingMode.ZERO_PAGE_X, "LSR"],
-            0x4E: [self.LSR, AddressingMode.ABSOLUTE, "LSR"],
-            0x5E: [self.LSR, AddressingMode.ABSOLUTE_X, "LSR"],
-            0xEA: [self.NOP, None, "NOP"],
-            0x09: [self.ORA, AddressingMode.IMMEDIATE, "ORA"],
-            0x05: [self.ORA, AddressingMode.ZERO_PAGE, "ORA"],
-            0x15: [self.ORA, AddressingMode.ZERO_PAGE_X, "ORA"],
-            0x0D: [self.ORA, AddressingMode.ABSOLUTE, "ORA"],
-            0x1D: [self.ORA, AddressingMode.ABSOLUTE_X, "ORA"],
-            0x19: [self.ORA, AddressingMode.ABSOLUTE_Y, "ORA"],
-            0x01: [self.ORA, AddressingMode.INDIRECT_X, "ORA"],
-            0x11: [self.ORA, AddressingMode.INDIRECT_Y, "ORA"],
-            0x48: [self.PHA, None, "PHA"],
-            0x08: [self.PHP, None, "PHP"],
-            0x68: [self.PLA, None, "PLA"],
-            0x28: [self.PLP, None, "PLP"],
-            0x2A: [self.ROL, AddressingMode.ACCUMULATOR, "ROL"],
-            0x26: [self.ROL, AddressingMode.ZERO_PAGE, "ROL"],
-            0x36: [self.ROL, AddressingMode.ZERO_PAGE_X, "ROL"],
-            0x2E: [self.ROL, AddressingMode.ABSOLUTE, "ROL"],
-            0x3E: [self.ROL, AddressingMode.ABSOLUTE_X, "ROL"],
-            0x6A: [self.ROR, AddressingMode.ACCUMULATOR, "ROR"],
-            0x66: [self.ROR, AddressingMode.ZERO_PAGE, "ROR"],
-            0x76: [self.ROR, AddressingMode.ZERO_PAGE_X, "ROR"],
-            0x6E: [self.ROR, AddressingMode.ABSOLUTE, "ROR"],
-            0x7E: [self.ROR, AddressingMode.ABSOLUTE_X, "ROR"],
-            0x40: [self.RTI, None, "ROR"],
-            0x60: [self.RTS, None, "RTS"],
-            0xE9: [self.SBC, AddressingMode.IMMEDIATE, "SBC"],
-            0xE5: [self.SBC, AddressingMode.ZERO_PAGE, "SBC"],
-            0xF5: [self.SBC, AddressingMode.ZERO_PAGE_X, "SBC"],
-            0xED: [self.SBC, AddressingMode.ABSOLUTE, "SBC"],
-            0xFD: [self.SBC, AddressingMode.ABSOLUTE_X, "SBC"],
-            0xF9: [self.SBC, AddressingMode.ABSOLUTE_Y, "SBC"],
-            0xE1: [self.SBC, AddressingMode.INDIRECT_X, "SBC"],
-            0xF1: [self.SBC, AddressingMode.INDIRECT_Y, "SBC"],
-            0x38: [self.SEC, None, "SEC"],
-            0xF8: [self.SED, None, "SED"],
-            0x78: [self.SEI, None, "SEI"],
-            0x85: [self.STA, AddressingMode.ZERO_PAGE, "STA"],
-            0x95: [self.STA, AddressingMode.ZERO_PAGE_X, "STA"],
-            0x8D: [self.STA, AddressingMode.ABSOLUTE, "STA"],
-            0x9D: [self.STA, AddressingMode.ABSOLUTE_X, "STA"],
-            0x99: [self.STA, AddressingMode.ABSOLUTE_Y, "STA"],
-            0x81: [self.STA, AddressingMode.INDIRECT_X, "STA"],
-            0x91: [self.STA, AddressingMode.INDIRECT_Y, "STA"],
-            0x86: [self.STX, AddressingMode.ZERO_PAGE, "STX"],
-            0x96: [self.STX, AddressingMode.ZERO_PAGE_Y, "STX"],
-            0x8E: [self.STX, AddressingMode.ABSOLUTE, "STX"],
-            0x84: [self.STY, AddressingMode.ZERO_PAGE, "STY"],
-            0x94: [self.STY, AddressingMode.ZERO_PAGE_X, "STY"],
-            0x8C: [self.STY, AddressingMode.ABSOLUTE, "STY"],
-            0xAA: [self.TAX, None, "TAX"],
-            0xA8: [self.TAY, None, "TAY"],
-            0xBA: [self.TSX, None, "TSX"],
-            0x8A: [self.TXA, None, "TXA"],
-            0x9A: [self.TXS, None, "TXS"],
-            0x98: [self.TYA, None, "TYA"],
+            0x69: [self.ADC, 2, AddressingMode.IMMEDIATE, "ADC", ],
+            0x65: [self.ADC, 3, AddressingMode.ZERO_PAGE, "ADC"],
+            0x75: [self.ADC, 4, AddressingMode.ZERO_PAGE_X, "ADC"],
+            0x6D: [self.ADC, 4, AddressingMode.ABSOLUTE, "ADC"],
+            0x7D: [self.ADC, 4, AddressingMode.ABSOLUTE_X, "ADC"],
+            0x79: [self.ADC, 4, AddressingMode.ABSOLUTE_Y, "ADC"],
+            0x61: [self.ADC, 6, AddressingMode.INDIRECT_X, "ADC"],
+            0x71: [self.ADC, 5, AddressingMode.INDIRECT_Y, "ADC"],
+            0x29: [self.AND, 2, AddressingMode.IMMEDIATE, "AND"],
+            0x25: [self.AND, 3, AddressingMode.ZERO_PAGE, "AND"],
+            0x35: [self.AND, 4, AddressingMode.ZERO_PAGE_X, "AND"],
+            0x2D: [self.AND, 4, AddressingMode.ABSOLUTE, "AND"],
+            0x3D: [self.AND, 4, AddressingMode.ABSOLUTE_X, "AND"],
+            0x39: [self.AND, 4, AddressingMode.ABSOLUTE_Y, "AND"],
+            0x21: [self.AND, 6, AddressingMode.INDIRECT_X, "AND"],
+            0x31: [self.AND, 5, AddressingMode.INDIRECT_Y, "AND"],
+            0x0A: [self.ASL, 2, AddressingMode.ACCUMULATOR, "ASL"],
+            0x06: [self.ASL, 5, AddressingMode.ZERO_PAGE, "ASL"],
+            0x16: [self.ASL, 6, AddressingMode.ZERO_PAGE_X, "ASL"],
+            0x0E: [self.ASL, 6, AddressingMode.ABSOLUTE, "ASL"],
+            0x1E: [self.ASL, 7, AddressingMode.ABSOLUTE_X, "ASL"],
+            0x90: [self.BCC, 2, AddressingMode.RELATIVE, "BCC"],
+            0xB0: [self.BCS, 2, AddressingMode.RELATIVE, "BCS"],
+            0xF0: [self.BEQ, 2, AddressingMode.RELATIVE, "BEQ"],
+            0x24: [self.BIT, 3, AddressingMode.ZERO_PAGE, "BIT"],
+            0x2C: [self.BIT, 4, AddressingMode.ABSOLUTE, "BIT"],
+            0x30: [self.BMI, 2, AddressingMode.RELATIVE, "BMI"],
+            0xD0: [self.BNE, 2, AddressingMode.RELATIVE, "BNE"],
+            0x10: [self.BPL, 2, AddressingMode.RELATIVE, "BPL"],
+            0x00: [self.BRK, 7, None, "BRK"],
+            0x50: [self.BVC, 2, AddressingMode.RELATIVE, "BVC"],
+            0x70: [self.BVS, 2, AddressingMode.RELATIVE, "BVS"],
+            0x18: [self.CLC, 2, None, "CLC"],
+            0xD8: [self.CLD, 2, None, "CLD"],
+            0x58: [self.CLI, 2, None, "CLI"],
+            0xB8: [self.CLV, 2, None, "CLV"],
+            0xC9: [self.CMP, 2, AddressingMode.IMMEDIATE, "CMP"],
+            0xC5: [self.CMP, 3, AddressingMode.ZERO_PAGE, "CMP"],
+            0xD5: [self.CMP, 4, AddressingMode.ZERO_PAGE_X, "CMP"],
+            0xCD: [self.CMP, 4, AddressingMode.ABSOLUTE, "CMP"],
+            0xDD: [self.CMP, 4, AddressingMode.ABSOLUTE_X, "CMP"],
+            0xD9: [self.CMP, 4, AddressingMode.ABSOLUTE_Y, "CMP"],
+            0xC1: [self.CMP, 6, AddressingMode.INDIRECT_X, "CMP"],
+            0xD1: [self.CMP, 5, AddressingMode.INDIRECT_Y, "CMP"],
+            0xE0: [self.CPX, 2, AddressingMode.IMMEDIATE, "CPX"],
+            0xE4: [self.CPX, 3, AddressingMode.ZERO_PAGE, "CPX"],
+            0xEC: [self.CPX, 4, AddressingMode.ABSOLUTE, "CPX"],
+            0xC0: [self.CPY, 2, AddressingMode.IMMEDIATE, "CPY"],
+            0xC4: [self.CPY, 3, AddressingMode.ZERO_PAGE, "CPY"],
+            0xCC: [self.CPY, 4, AddressingMode.ABSOLUTE, "CPY"],
+            0xC6: [self.DEC, 5, AddressingMode.ZERO_PAGE, "DEC"],
+            0xD6: [self.DEC, 6, AddressingMode.ZERO_PAGE_X, "DEC"],
+            0xCE: [self.DEC, 6, AddressingMode.ABSOLUTE, "DEC"],
+            0xDE: [self.DEC, 7, AddressingMode.ABSOLUTE_X, "DEC"],
+            0xCA: [self.DEX, 2, None, "DEX"],
+            0x88: [self.DEY, 2, None, "DEY"],
+            0x49: [self.EOR, 2, AddressingMode.IMMEDIATE, "EOR"],
+            0x45: [self.EOR, 3, AddressingMode.ZERO_PAGE, "EOR"],
+            0x55: [self.EOR, 4, AddressingMode.ZERO_PAGE_X, "EOR"],
+            0x4D: [self.EOR, 4, AddressingMode.ABSOLUTE, "EOR"],
+            0x5D: [self.EOR, 4, AddressingMode.ABSOLUTE_X, "EOR"],
+            0x59: [self.EOR, 4, AddressingMode.ABSOLUTE_Y, "EOR"],
+            0x41: [self.EOR, 6, AddressingMode.INDIRECT_X, "EOR"],
+            0x51: [self.EOR, 5, AddressingMode.INDIRECT_Y, "EOR"],
+            0xE6: [self.INC, 5, AddressingMode.ZERO_PAGE, "INC"],
+            0xF6: [self.INC, 6, AddressingMode.ZERO_PAGE_X, "INC"],
+            0xEE: [self.INC, 6, AddressingMode.ABSOLUTE, "INC"],
+            0xFE: [self.INC, 7, AddressingMode.ABSOLUTE_X, "INC"],
+            0xE8: [self.INX, 2, None, "INX"],
+            0xC8: [self.INY, 2, None, "INY"],
+            0x4C: [self.JMP, 3, AddressingMode.ABSOLUTE, "JMP"],
+            0x6C: [self.JMP, 3, AddressingMode.INDIRECT, "JMP"],
+            0x20: [self.JSR, 6, AddressingMode.ABSOLUTE, "JSR"],
+            0xA9: [self.LDA, 2, AddressingMode.IMMEDIATE, "LDA"],
+            0xA5: [self.LDA, 3, AddressingMode.ZERO_PAGE, "LDA"],
+            0xB5: [self.LDA, 4, AddressingMode.ZERO_PAGE_X, "LDA"],
+            0xAD: [self.LDA, 4, AddressingMode.ABSOLUTE, "LDA"],
+            0xBD: [self.LDA, 4, AddressingMode.ABSOLUTE_X, "LDA"],
+            0xB9: [self.LDA, 4, AddressingMode.ABSOLUTE_Y, "LDA"],
+            0xA1: [self.LDA, 6, AddressingMode.INDIRECT_X, "LDA"],
+            0xB1: [self.LDA, 5, AddressingMode.INDIRECT_Y, "LDA"],
+            0xA2: [self.LDX, 2, AddressingMode.IMMEDIATE, "LDX"],
+            0xA6: [self.LDX, 3, AddressingMode.ZERO_PAGE, "LDX"],
+            0xB6: [self.LDX, 4, AddressingMode.ZERO_PAGE_Y, "LDX"],
+            0xAE: [self.LDX, 4, AddressingMode.ABSOLUTE, "LDX"],
+            0xBE: [self.LDX, 4, AddressingMode.ABSOLUTE_Y, "LDX"],
+            0xA0: [self.LDY, 2, AddressingMode.IMMEDIATE, "LDY"],
+            0xA4: [self.LDY, 3, AddressingMode.ZERO_PAGE, "LDY"],
+            0xB4: [self.LDY, 4, AddressingMode.ZERO_PAGE_X, "LDY"],
+            0xAC: [self.LDY, 4, AddressingMode.ABSOLUTE, "LDY"],
+            0xBC: [self.LDY, 4, AddressingMode.ABSOLUTE_X, "LDY"],
+            0x4A: [self.LSR_accumulator, 2, AddressingMode.ACCUMULATOR, "LSR"],
+            0x46: [self.LSR, 5, AddressingMode.ZERO_PAGE, "LSR"],
+            0x56: [self.LSR, 6, AddressingMode.ZERO_PAGE_X, "LSR"],
+            0x4E: [self.LSR, 6, AddressingMode.ABSOLUTE, "LSR"],
+            0x5E: [self.LSR, 7, AddressingMode.ABSOLUTE_X, "LSR"],
+            0xEA: [self.NOP, 2, None, "NOP"],
+            0x09: [self.ORA, 2, AddressingMode.IMMEDIATE, "ORA"],
+            0x05: [self.ORA, 3, AddressingMode.ZERO_PAGE, "ORA"],
+            0x15: [self.ORA, 4, AddressingMode.ZERO_PAGE_X, "ORA"],
+            0x0D: [self.ORA, 4, AddressingMode.ABSOLUTE, "ORA"],
+            0x1D: [self.ORA, 4, AddressingMode.ABSOLUTE_X, "ORA"],
+            0x19: [self.ORA, 4, AddressingMode.ABSOLUTE_Y, "ORA"],
+            0x01: [self.ORA, 6, AddressingMode.INDIRECT_X, "ORA"],
+            0x11: [self.ORA, 5, AddressingMode.INDIRECT_Y, "ORA"],
+            0x48: [self.PHA, 3, None, "PHA"],
+            0x08: [self.PHP, 3, None, "PHP"],
+            0x68: [self.PLA, 4, None, "PLA"],
+            0x28: [self.PLP, 4, None, "PLP"],
+            0x2A: [self.ROL, 2, AddressingMode.ACCUMULATOR, "ROL"],
+            0x26: [self.ROL, 5, AddressingMode.ZERO_PAGE, "ROL"],
+            0x36: [self.ROL, 6, AddressingMode.ZERO_PAGE_X, "ROL"],
+            0x2E: [self.ROL, 6, AddressingMode.ABSOLUTE, "ROL"],
+            0x3E: [self.ROL, 7, AddressingMode.ABSOLUTE_X, "ROL"],
+            0x6A: [self.ROR, 2, AddressingMode.ACCUMULATOR, "ROR"],
+            0x66: [self.ROR, 5, AddressingMode.ZERO_PAGE, "ROR"],
+            0x76: [self.ROR, 6, AddressingMode.ZERO_PAGE_X, "ROR"],
+            0x6E: [self.ROR, 6, AddressingMode.ABSOLUTE, "ROR"],
+            0x7E: [self.ROR, 7, AddressingMode.ABSOLUTE_X, "ROR"],
+            0x40: [self.RTI, 6, None, "RTI"],
+            0x60: [self.RTS, 6, None, "RTS"],
+            0xE9: [self.SBC, 2, AddressingMode.IMMEDIATE, "SBC"],
+            0xE5: [self.SBC, 3, AddressingMode.ZERO_PAGE, "SBC"],
+            0xF5: [self.SBC, 4, AddressingMode.ZERO_PAGE_X, "SBC"],
+            0xED: [self.SBC, 4, AddressingMode.ABSOLUTE, "SBC"],
+            0xFD: [self.SBC, 4, AddressingMode.ABSOLUTE_X, "SBC"],
+            0xF9: [self.SBC, 4, AddressingMode.ABSOLUTE_Y, "SBC"],
+            0xE1: [self.SBC, 6, AddressingMode.INDIRECT_X, "SBC"],
+            0xF1: [self.SBC, 5, AddressingMode.INDIRECT_Y, "SBC"],
+            0x38: [self.SEC, 2, None, "SEC"],
+            0xF8: [self.SED, 2, None, "SED"],
+            0x78: [self.SEI, 2, None, "SEI"],
+            0x85: [self.STA, 3, AddressingMode.ZERO_PAGE, "STA"],
+            0x95: [self.STA, 4, AddressingMode.ZERO_PAGE_X, "STA"],
+            0x8D: [self.STA, 4, AddressingMode.ABSOLUTE, "STA"],
+            0x9D: [self.STA, 5, AddressingMode.ABSOLUTE_X, "STA"],
+            0x99: [self.STA, 5, AddressingMode.ABSOLUTE_Y, "STA"],
+            0x81: [self.STA, 6, AddressingMode.INDIRECT_X, "STA"],
+            0x91: [self.STA, 6, AddressingMode.INDIRECT_Y, "STA"],
+            0x86: [self.STX, 3, AddressingMode.ZERO_PAGE, "STX"],
+            0x96: [self.STX, 4, AddressingMode.ZERO_PAGE_Y, "STX"],
+            0x8E: [self.STX, 4, AddressingMode.ABSOLUTE, "STX"],
+            0x84: [self.STY, 3, AddressingMode.ZERO_PAGE, "STY"],
+            0x94: [self.STY, 4, AddressingMode.ZERO_PAGE_X, "STY"],
+            0x8C: [self.STY, 4, AddressingMode.ABSOLUTE, "STY"],
+            0xAA: [self.TAX, 2, None, "TAX"],
+            0xA8: [self.TAY, 2, None, "TAY"],
+            0xBA: [self.TSX, 2, None, "TSX"],
+            0x8A: [self.TXA, 2, None, "TXA"],
+            0x9A: [self.TXS, 2, None, "TXS"],
+            0x98: [self.TYA, 2, None, "TYA"],
         }
 
     def initialise_RAM(self) -> None:
@@ -215,19 +215,19 @@ class MOS6502:
             self.print_system()
             # Snake writes
             self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
-            self.ram.write(0xff, 0x77) # an input
+            # self.ram.write(0xff, 0x77) # an input
             #
             if self.debug:
                 self.ram.visualise_memory()
                 input("Press Button to continue")
 
             opcode = self.ram.read(self.r_program_counter)  # Code from program
-            print(f'{hex(opcode)}, {self.lookup_table[opcode][2]}')
+            print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
             
 
             self.r_program_counter += 1
             f = self.lookup_table[opcode][0]
-            a = self.lookup_table[opcode][1]
+            a = self.lookup_table[opcode][2]
             f(a) # run the opcode with the specified addressing mode
 
             if self.break_flag == True:
@@ -240,6 +240,10 @@ class MOS6502:
         self.r_index_X = np.uint8(0)
         self.r_index_Y = np.uint8(0)
         self.r_status = dict.fromkeys(self.r_status, False)
+        ###
+        self.r_status["flag_B0"] = True
+        self.r_status["flag_B1"] = True
+        ###
 
         self.break_flag = False
 
@@ -307,8 +311,8 @@ class MOS6502:
             case AddressingMode.INDIRECT_Y:
                 base = self.ram.read(self.r_program_counter)
 
-                lo = self.read(base.astype(np.uint16))
-                hi = self.read(
+                lo = self.ram.read(base.astype(np.uint16))
+                hi = self.ram.read(
                     (base + np.uint8).astype(np.uint16)
                 )  # Wrapping Add (may throw overflow exception)
                 deref_base = np.uint16(hi) << 8 | np.uint16(lo)
@@ -324,7 +328,9 @@ class MOS6502:
                 raise NotImplementedError
             case AddressingMode.RELATIVE:
                 # TODO: Verify this is correct
-                return self.r_program_counter
+                value = self.r_program_counter
+                self.r_program_counter += 1
+                return value
     
     def value_to_status(self, value):
         for i, f in enumerate(self.r_status):
@@ -362,7 +368,7 @@ class MOS6502:
             f"A: 0x{self.r_accumulator:02x}, "
             f"X: 0x{self.r_index_X:02x}, "
             f"Y: 0x{self.r_index_Y:02x}, "
-            f"{[int(self.r_status[k]) for k in self.r_status.keys()]}"
+            f"{[int(self.r_status[k]) for k in self.r_status.keys()][::-1]}"
         )
  
     # ----------------------------------------------------------------
@@ -426,7 +432,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_Z"]:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value) + np.uint8(1)
 
     def BIT(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -449,7 +455,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_Z"] == False:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def BPL(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -490,7 +496,7 @@ class MOS6502:
     def CMP(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = np.uint8(self.r_accumulator - value)
+        result = self.r_accumulator - value
 
         self.r_status["flag_C"] = True if self.r_accumulator >= value else False
         self.r_status["flag_Z"] = True if self.r_accumulator == value else False
@@ -517,18 +523,18 @@ class MOS6502:
     def DEC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = value - 1
+        result = value - np.uint8(1)
         self.ram.write(addr, result)
 
         self.r_status["flag_Z"] = True if result == 0 else False
         self.r_status["flag_N"] = bool(result >> 7)
 
     def DEX(self, mode: AddressingMode):
-        self.r_index_X -= 1
+        self.r_index_X -= np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_X)
 
     def DEY(self, mode: AddressingMode):
-        self.r_index_Y -= 1
+        self.r_index_Y -= np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_Y)
 
     def EOR(self, mode: AddressingMode):
@@ -541,18 +547,18 @@ class MOS6502:
     def INC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = value + 1
+        result = value + np.uint8(1)
         self.ram.write(addr, result)
 
         self.r_status["flag_Z"] = True if result == 0 else False
         self.r_status["flag_N"] = bool(result >> 7)
 
     def INX(self, mode: AddressingMode):
-        self.r_index_X += 1
+        self.r_index_X += np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_X)
 
     def INY(self, mode: AddressingMode):
-        self.r_index_Y += 1
+        self.r_index_Y += np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_Y)
 
     def JMP(self, mode: AddressingMode):
