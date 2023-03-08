@@ -215,7 +215,7 @@ class MOS6502:
             
             # Snake writes
             self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
-            self.ram.write(0xff, 0x77) # an input
+            # self.ram.write(0xff, 0x77) # an input
             #
             if self.debug:
                 self.ram.visualise_memory()
