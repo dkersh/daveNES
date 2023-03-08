@@ -212,10 +212,10 @@ class MOS6502:
     def run_program(self) -> None:
 
         while True:
-            self.print_system()
+            
             # Snake writes
             self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
-            # self.ram.write(0xff, 0x77) # an input
+            self.ram.write(0xff, 0x77) # an input
             #
             if self.debug:
                 self.ram.visualise_memory()
@@ -223,6 +223,7 @@ class MOS6502:
 
             opcode = self.ram.read(self.r_program_counter)  # Code from program
             print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+            self.print_system()
             
 
             self.r_program_counter += 1
@@ -299,6 +300,7 @@ class MOS6502:
 
             case AddressingMode.INDIRECT_X:
                 base = self.ram.read(self.r_program_counter)
+                self.r_program_counter += 1
                 ptr = (
                     base + self.r_index_X
                 )  # Wrapping Add (may throw overflow exception)
@@ -310,10 +312,11 @@ class MOS6502:
 
             case AddressingMode.INDIRECT_Y:
                 base = self.ram.read(self.r_program_counter)
+                self.r_program_counter += 1
 
                 lo = self.ram.read(base.astype(np.uint16))
                 hi = self.ram.read(
-                    (base + np.uint8).astype(np.uint16)
+                    (base + np.uint8(1)).astype(np.uint16)
                 )  # Wrapping Add (may throw overflow exception)
                 deref_base = np.uint16(hi) << 8 | np.uint16(lo)
 
@@ -418,21 +421,21 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_C"] == False:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def BCS(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_C"]:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def BEQ(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_Z"]:
-            self.r_program_counter += np.int8(value) + np.uint8(1)
+            self.r_program_counter += np.int8(value) # + np.uint8(1)
 
     def BIT(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -440,7 +443,7 @@ class MOS6502:
         result = self.r_accumulator & value
 
         self.r_status["flag_Z"] = True if result == 0 else False
-        self.r_status["flag_V"] = bool(result >> 6)
+        self.r_status["flag_V"] = bool(result & 0b0100_0000)
         self.r_status["flag_N"] = bool(result >> 7)
 
     def BMI(self, mode: AddressingMode):
@@ -448,7 +451,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_N"]:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value) + np.uint8(1)
 
     def BNE(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -462,7 +465,7 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_N"] == False:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def BRK(self, mode: AddressingMode):
         self.break_flag = True
@@ -472,14 +475,14 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_V"] == False:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def BVS(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         if self.r_status["flag_V"]:
-            self.r_program_counter += np.int8(value) + 1
+            self.r_program_counter += np.int8(value)
 
     def CLC(self, mode: AddressingMode):
         self.r_status["flag_C"] = False
@@ -498,6 +501,9 @@ class MOS6502:
         value = self.ram.read(addr)
         result = self.r_accumulator - value
 
+        #print(f'r_a: {self.r_accumulator}, value: {value}')
+        #print(f'The result is {result}')
+
         self.r_status["flag_C"] = True if self.r_accumulator >= value else False
         self.r_status["flag_Z"] = True if self.r_accumulator == value else False
         self.r_status["flag_N"] = bool(result >> 7)
@@ -505,7 +511,7 @@ class MOS6502:
     def CPX(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = np.uint8(self.r_index_X - value)
+        result = self.r_index_X - value
 
         self.r_status["flag_C"] = True if self.r_index_X >= value else False
         self.r_status["flag_Z"] = True if self.r_index_X == value else False
@@ -514,7 +520,7 @@ class MOS6502:
     def CPY(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = np.uint8(self.r_index_Y - value)
+        result = self.r_index_Y - value
 
         self.r_status["flag_C"] = True if self.r_index_Y >= value else False
         self.r_status["flag_Z"] = True if self.r_index_Y == value else False
@@ -568,7 +574,7 @@ class MOS6502:
 
     def JSR(self, mode: AddressingMode):
         self.stack_push_u16(
-            self.r_program_counter + 1
+            self.r_program_counter + np.uint8(1)
         )  # For some reason the ebook puts this as + 2 - 1 (ie + 1)
         addr = self.get_operand_address(mode)
         self.r_program_counter = addr
@@ -668,7 +674,7 @@ class MOS6502:
 
     def RTS(self, mode: AddressingMode):
         value = self.stack_pop_u16()
-        self.r_program_counter = value + 1
+        self.r_program_counter = value + np.uint8(1)
 
     def SBC(self, mode: AddressingMode):
         # A-B = A + (-B) and -B = !B + 1
