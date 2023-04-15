@@ -1,0 +1,54 @@
+import numpy as np
+import pygame
+import time
+
+def update_data(data):
+    # modify the data array in some way
+    data = [x * 2 for x in data]
+    return data
+
+def render_screen(screen, arr):
+    # create a surface from the numpy array
+    surf = pygame.surfarray.make_surface(arr)
+
+    # scale up the surface to the size of the screen
+    scaled_surf = pygame.transform.scale(surf, (320, 320))
+
+    # blit the scaled surface to the screen
+    screen.blit(scaled_surf, (0, 0))
+
+    # update the display
+    pygame.display.update()
+
+# create a 32x32 numpy array
+arr = np.zeros((32, 32))
+
+# fill the array with values from an array between indices 0x0200 and 0x05FF
+# assuming the values are stored in a list named 'data'
+data = [1, 2, 3, ..., 1023]  # example data
+arr.flat[:len(data)] = data  # fill the first len(data) elements of arr with data
+
+# initialize pygame
+pygame.init()
+screen = pygame.display.set_mode((320, 320))
+
+# render the initial screen
+render_screen(screen, arr)
+
+# run the event loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
+            # modify the data array when the UP key is pressed
+            data = update_data(data)
+            arr.flat[:len(data)] = data
+            render_screen(screen, arr)
+
+    # wait for a short time to prevent the event loop from consuming too much CPU
+    time.sleep(0.01)
+
+# quit pygame properly to avoid crashing Jupyter notebook
+pygame.quit()

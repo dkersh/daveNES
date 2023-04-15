@@ -3,6 +3,8 @@ import numpy as np
 
 from program import Program
 
+import pygame
+import time
 
 class Memory:
     def __init__(self):

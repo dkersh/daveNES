@@ -4,6 +4,8 @@ import numpy as np
 
 from memory import Memory
 from program import Program
+import pygame
+import time
 
 
 class AddressingMode(Enum):
@@ -209,30 +211,70 @@ class MOS6502:
         self.ram.write_u16(0xFFFC, 0x0600)  # Write the start of the program to addr 0xFFFC
         self.reset()
 
+    def step_program(self) -> bool:
+        # TODO: Gravitate towards a step program paradigm.
+        # Random value required for Snake program
+        self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+
+        if self.debug:
+            self.ram.visualise_memory()
+            input("Press Button to continue")
+
+        opcode = self.ram.read(self.r_program_counter)  # Code from program
+        #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+        #self.print_system()
+
+        self.r_program_counter += 1
+        f = self.lookup_table[opcode][0]
+        a = self.lookup_table[opcode][2]
+        f(a) # run the opcode with the specified addressing mode
+
     def run_program(self) -> None:
+        # Set up pygame
+        # TODO: Offload to a different class
+
+        pygame.init()
+        screen = pygame.display.set_mode((320, 320))
+        data = np.zeros(32*32)
+        pygame.display.update()
 
         while True:
-            
-            # Snake writes
-            self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
-            # self.ram.write(0xff, 0x77) # an input
-            #
-            if self.debug:
-                self.ram.visualise_memory()
-                input("Press Button to continue")
-
-            opcode = self.ram.read(self.r_program_counter)  # Code from program
-            print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
-            self.print_system()
+            self.step_program()
             
 
-            self.r_program_counter += 1
-            f = self.lookup_table[opcode][0]
-            a = self.lookup_table[opcode][2]
-            f(a) # run the opcode with the specified addressing mode
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.break_flag = True
+                    break
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
+                    print('UP PRESSED')
+                    self.ram.write(0xff, 0x77)
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                    print('RIGHT PRESSED')
+                    self.ram.write(0xff, 0x61)
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                    print('LEFT PRESSED')
+                    self.ram.write(0xff, 0x64)
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
+                    print('DOWN PRESSED')
+                    self.ram.write(0xff, 0x73)
+
+            if np.all(data == self.ram.memory[0x0200:0x05FF+1]) == False:
+                data = self.ram.memory[0x0200:0x05FF+1]
+                data = np.reshape(data, (32, 32))
+                surf = pygame.surfarray.make_surface(data)
+                scaled_surf = pygame.transform.scale(surf, (320, 320))
+                screen.blit(scaled_surf, (0, 0))
+                screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
+                pygame.display.update()
 
             if self.break_flag == True:
                 break
+        
+        #
+
+            # time.sleep(0.0000001)
+        pygame.quit()
 
     def reset(self) -> None:
         self.r_program_counter = self.ram.read_u16(0xFFFC)
@@ -375,7 +417,7 @@ class MOS6502:
         )
  
     # ----------------------------------------------------------------
-    # Implementation of Instructions
+    # Implementation of OpCodes
     # ----------------------------------------------------------------
 
     def ADC(self, mode: AddressingMode):
@@ -677,6 +719,7 @@ class MOS6502:
         self.r_program_counter = value + np.uint8(1)
 
     def SBC(self, mode: AddressingMode):
+        print('SBC performed')
         # A-B = A + (-B) and -B = !B + 1
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
@@ -684,7 +727,7 @@ class MOS6502:
         a = self.r_accumulator
         b = np.uint8(value)
 
-        result = a + (~b + np.uint8(1))
+        result = a + (~b + self.r_status['flag_C'])
 
         self.r_accumulator = np.uint8(result)
 
@@ -730,7 +773,7 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def TXS(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.r_stack_pointer = self.r_index_X
 
     def TYA(self, mode: AddressingMode):
         raise NotImplementedError
