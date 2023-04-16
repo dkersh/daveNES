@@ -38,7 +38,7 @@ class MOS6502:
             "flag_Z": False,
             "flag_I": False,
             "flag_D": False,
-            "flag_B0": True,
+            "flag_B0": False,
             "flag_B1": True,
             "flag_V": False,
             "flag_N": False,
@@ -214,15 +214,15 @@ class MOS6502:
     def step_program(self) -> bool:
         # TODO: Gravitate towards a step program paradigm.
         # Random value required for Snake program
-        self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        #self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
         if self.debug:
             self.ram.visualise_memory()
             input("Press Button to continue")
 
         opcode = self.ram.read(self.r_program_counter)  # Code from program
-        #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
-        #self.print_system()
+        print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+        self.print_system()
 
         self.r_program_counter += 1
         f = self.lookup_table[opcode][0]
@@ -233,15 +233,20 @@ class MOS6502:
         # Set up pygame
         # TODO: Offload to a different class
 
+
+        # For the snake program
+        '''
         pygame.init()
         screen = pygame.display.set_mode((320, 320))
         data = np.zeros(32*32)
         pygame.display.update()
+        '''
 
         while True:
             self.step_program()
             
-
+            # This is Explicitly for the snake program
+            '''
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.break_flag = True
@@ -267,6 +272,7 @@ class MOS6502:
                 screen.blit(scaled_surf, (0, 0))
                 screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
                 pygame.display.update()
+            '''
 
             if self.break_flag == True:
                 break
@@ -284,7 +290,7 @@ class MOS6502:
         self.r_index_Y = np.uint8(0)
         self.r_status = dict.fromkeys(self.r_status, False)
         ###
-        self.r_status["flag_B0"] = True
+        self.r_status["flag_B0"] = False
         self.r_status["flag_B1"] = True
         ###
 
@@ -370,7 +376,9 @@ class MOS6502:
                 raise NotImplementedError
             case AddressingMode.ACCUMULATOR:
                 # TODO: Any time this addressingmode is requested, act directly on Accumulator
-                raise NotImplementedError
+                value = self.r_accumulator
+                #self.r_program_counter += 1
+                return value
             case AddressingMode.RELATIVE:
                 # TODO: Verify this is correct
                 value = self.r_program_counter
@@ -380,6 +388,9 @@ class MOS6502:
     def value_to_status(self, value):
         for i, f in enumerate(self.r_status):
             self.r_status[f] = value & (1 << i) != 0
+    
+    def status_to_value(self):
+        raise NotImplementedError
 
 
     def stack_pop(self) -> np.uint8:
@@ -445,16 +456,18 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def ASL(self, mode: AddressingMode):
-        # TODO: Test this method
-        addr = self.get_operand_address(mode)
-        value = self.ram.read(addr)
+        if mode == AddressingMode.ACCUMULATOR:
+            value = self.get_operand_address(mode)
+        else:
+            addr = self.get_operand_address(mode)
+            value = self.ram.read(addr)
         shifted = value << 1
 
         self.r_status["flag_C"] = True if shifted > 255 else False
         self.update_zero_and_negative_flags(self.r_accumulator)
 
         if mode == AddressingMode.ACCUMULATOR:
-            self.r_accumulator(np.uint8(shifted))
+            self.r_accumulator = np.uint8(shifted)
         else:
             self.ram.write(addr, np.uint8(shifted))
 
@@ -510,7 +523,10 @@ class MOS6502:
             self.r_program_counter += np.int8(value)
 
     def BRK(self, mode: AddressingMode):
+        print('BREAK')
         self.break_flag = True
+        self.r_status['flag_B0'] = True
+        self.r_program_counter += 1
 
     def BVC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -588,6 +604,7 @@ class MOS6502:
     def EOR(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
+        print(value)
         self.r_accumulator ^= value
 
         self.update_zero_and_negative_flags(self.r_accumulator)
