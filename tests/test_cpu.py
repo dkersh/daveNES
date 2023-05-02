@@ -5,19 +5,22 @@ import sys
 sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
 import cpu
 
-json_test = 'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/0a.json'
-test_range = range(10000) # number of tests in a json
+all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()]
+json_test = lambda x: f'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
+all_json_files = [json_test(c) for c in all_op_codes]
+json_files_reshaped = np.repeat(all_json_files, 10)
+inds = np.ravel([np.arange(10).tolist() for i in range(len(all_json_files))])
 
-@pytest.fixture
+
 def get_json(json_filename: str = json_test) -> dict:
     with open(json_filename) as f:
         test = json.load(f)
 
-    print(test[0]['name'])
-    print(test[0]['initial'])
-    print(test[0]['final'])
-    for l in test[0]['cycles']:
-        print(f'addr: 0x{l[0]:04x} | value: 0x{l[1]:04x} | {l[2]}')
+    #print(test[0]['name'])
+    #print(test[0]['initial'])
+    #print(test[0]['final'])
+    #for l in test[0]['cycles']:
+    #    print(f'addr: 0x{l[0]:04x} | value: 0x{l[1]:04x} | {l[2]}')
 
     return test
 
@@ -38,10 +41,11 @@ def init_daveNES(test):
 
     return daveNES
 
-@pytest.mark.parametrize('i', test_range)
-def test_daveNES(get_json, i):
-    print(f'ind: {i}')
-    test = get_json[i]
+# @pytest.mark.parametrize('json_filename, i',(all_json_files, np.arange(10)))
+@pytest.mark.parametrize("json_filename, i", zip(json_files_reshaped, inds))
+def test_daveNES(i, json_filename):
+    print(f'ind: {i}, filename: {json_filename}')
+    test = get_json(json_filename)[i]
     daveNES = init_daveNES(test)
 
     daveNES.step_program()
