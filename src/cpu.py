@@ -214,7 +214,7 @@ class MOS6502:
     def step_program(self) -> bool:
         # TODO: Gravitate towards a step program paradigm.
         # Random value required for Snake program
-        #self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
         if self.debug:
             self.ram.visualise_memory()
@@ -230,23 +230,27 @@ class MOS6502:
         f(a) # run the opcode with the specified addressing mode
 
     def run_program(self) -> None:
+        while True:
+            self.step_program()
+
+            if self.break_flag:
+                break
+    '''
+    def run_program(self) -> None:
         # Set up pygame
         # TODO: Offload to a different class
 
 
         # For the snake program
-        '''
         pygame.init()
         screen = pygame.display.set_mode((320, 320))
         data = np.zeros(32*32)
         pygame.display.update()
-        '''
 
         while True:
             self.step_program()
             
             # This is Explicitly for the snake program
-            '''
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.break_flag = True
@@ -272,7 +276,6 @@ class MOS6502:
                 screen.blit(scaled_surf, (0, 0))
                 screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
                 pygame.display.update()
-            '''
 
             if self.break_flag == True:
                 break
@@ -281,6 +284,7 @@ class MOS6502:
 
             # time.sleep(0.0000001)
         pygame.quit()
+    '''
 
     def reset(self) -> None:
         self.r_program_counter = self.ram.read_u16(0xFFFC)
@@ -332,16 +336,13 @@ class MOS6502:
 
             case AddressingMode.ABSOLUTE_X:
                 base = self.ram.read_u16(self.r_program_counter)
-                return base + self.r_index_X.astype(
-                    np.uint16
-                )  # Wrapping Add (may throw overflow exception)
+                self.r_program_counter += 2
+                return base + np.uint16(self.r_index_X) # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.ABSOLUTE_Y:
                 base = self.ram.read_u16(self.r_program_counter)
                 self.r_program_counter += 2
-                return base + self.r_index_Y.astype(
-                    np.uint16
-                )  # Wrapping Add (may throw overflow exception)
+                return base + np.uint16(self.r_index_Y)  # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.INDIRECT:
                 raise NotImplementedError
@@ -349,14 +350,11 @@ class MOS6502:
             case AddressingMode.INDIRECT_X:
                 base = self.ram.read(self.r_program_counter)
                 self.r_program_counter += 1
-                ptr = (
-                    base + self.r_index_X
-                )  # Wrapping Add (may throw overflow exception)
-                lo = self.ram.read(ptr.astype(np.uint16))
-                hi = self.ram.read(
-                    (ptr + np.uint8(1)).astype(np.uint16)
-                )  # Wrapping Add (may throw overflow exception)
-                return np.uint16(hi) << 8 | np.uint16(lo)
+                ptr = base + np.uint8(self.r_index_X)
+                lo = self.ram.read(ptr)
+                hi = self.ram.read(ptr + np.uint8(1))
+
+                return hi << 8 | lo
 
             case AddressingMode.INDIRECT_Y:
                 base = self.ram.read(self.r_program_counter)

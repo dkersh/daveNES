@@ -8,8 +8,9 @@ import cpu
 all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()]
 json_test = lambda x: f'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
 all_json_files = [json_test(c) for c in all_op_codes]
-json_files_reshaped = np.repeat(all_json_files, 10)
-inds = np.ravel([np.arange(10).tolist() for i in range(len(all_json_files))])
+num_of_test_files = 10
+json_files_reshaped = np.repeat(all_json_files, num_of_test_files)
+inds = np.ravel([np.arange(num_of_test_files).tolist() for i in range(len(all_json_files))])
 
 
 def get_json(json_filename: str = json_test) -> dict:
