@@ -319,7 +319,7 @@ class MOS6502:
                     pos + self.r_index_X
                 )  # Wrapping Add (may throw overflow exception)
                 self.r_program_counter += 1
-                return value
+                return np.uint8(value)
 
             case AddressingMode.ZERO_PAGE_Y:
                 pos = self.ram.read(self.r_program_counter)
@@ -327,7 +327,7 @@ class MOS6502:
                     pos + self.r_index_Y
                 )  # Wrapping Add (may throw overflow exception)
                 self.r_program_counter += 1
-                return value
+                return np.uint8(value)
 
             case AddressingMode.ABSOLUTE:
                 value = self.ram.read_u16(self.r_program_counter)
@@ -430,12 +430,15 @@ class MOS6502:
     # ----------------------------------------------------------------
 
     def ADC(self, mode: AddressingMode):
+        print(f'ADC - PC: {self.r_program_counter}')
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         a = np.uint16(self.r_accumulator)
         m = np.uint16(value)
         c = np.uint16(self.r_status["flag_C"])
+
+        print(f'{a}, {m}, {c}')
 
         result = a + m + c
 
