@@ -235,6 +235,7 @@ class MOS6502:
 
             if self.break_flag:
                 break
+    
     '''
     def run_program(self) -> None:
         # Set up pygame
@@ -257,6 +258,8 @@ class MOS6502:
                     break
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
                     print('UP PRESSED')
+                    #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+                    #self.print_system()
                     self.ram.write(0xff, 0x77)
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
                     print('RIGHT PRESSED')
@@ -345,7 +348,11 @@ class MOS6502:
                 return base + np.uint16(self.r_index_Y)  # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.INDIRECT:
-                raise NotImplementedError
+                base = self.ram.read_u16(self.r_program_counter)
+                self.r_program_counter += 2
+                base = self.ram.read_u16(base)
+                self.r_program_counter += 2
+                return base
 
             case AddressingMode.INDIRECT_X:
                 base = self.ram.read(self.r_program_counter)
@@ -507,7 +514,8 @@ class MOS6502:
         value = self.ram.read(addr)
 
         if self.r_status["flag_N"]:
-            self.r_program_counter += np.int8(value) + np.uint8(1)
+            print('flag N')
+            self.r_program_counter += np.int8(value)
 
     def BNE(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -620,11 +628,11 @@ class MOS6502:
         self.r_status["flag_N"] = bool(result >> 7)
 
     def INX(self, mode: AddressingMode):
-        self.r_index_X += np.uint8(1)
+        self.r_index_X = np.uint8(self.r_index_X) + np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_X)
 
     def INY(self, mode: AddressingMode):
-        self.r_index_Y += np.uint8(1)
+        self.r_index_Y = np.uint8(self.r_index_Y) + np.uint8(1)
         self.update_zero_and_negative_flags(self.r_index_Y)
 
     def JMP(self, mode: AddressingMode):
