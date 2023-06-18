@@ -214,7 +214,7 @@ class MOS6502:
     def step_program(self) -> bool:
         # TODO: Gravitate towards a step program paradigm.
         # Random value required for Snake program
-        self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        # self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
         if self.debug:
             self.ram.visualise_memory()
