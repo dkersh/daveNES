@@ -75,3 +75,6 @@ def test_daveNES(i, json_filename):
     assert test['final']['a'] == daveNES.r_accumulator
     assert test['final']['x'] == daveNES.r_index_X
     assert test['final']['y'] == daveNES.r_index_Y
+
+    # and the registers
+    assert f'{test["final"]["p"]:08b}' == "".join(str(int(daveNES.r_status[k])) for k in daveNES.r_status.keys())[::-1]

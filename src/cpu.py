@@ -472,12 +472,12 @@ class MOS6502:
         shifted = value << 1
 
         self.r_status["flag_C"] = True if shifted > 255 else False
-        self.update_zero_and_negative_flags(self.r_accumulator)
 
         if mode == AddressingMode.ACCUMULATOR:
             self.r_accumulator = np.uint8(shifted)
         else:
             self.ram.write(addr, np.uint8(shifted))
+        self.update_zero_and_negative_flags(self.r_accumulator)
 
     def BCC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
