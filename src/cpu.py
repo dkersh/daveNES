@@ -478,7 +478,9 @@ class MOS6502:
             self.r_accumulator = np.uint8(shifted)
         else:
             self.ram.write(addr, np.uint8(shifted))
-        self.update_zero_and_negative_flags(shifted)
+        self.update_zero_and_negative_flags(np.uint8(shifted))
+        if self.r_accumulator == 0:
+            self.r_status['flag_Z'] = True
 
     def BCC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -754,13 +756,20 @@ class MOS6502:
         a = self.r_accumulator
         b = np.uint8(value)
 
+        
+
         result = a + (~b + self.r_status['flag_C'])
 
-        self.r_accumulator = np.uint8(result)
+        print(f'{value =}')
+        print(f'{a =}')
+        print(f'{b =}')
+        print(f'{result =}')
 
         # Setting Flags
         self.r_status["flag_C"] = True if result > 255 else False
-        self.r_status["flag_V"] = True if (~(a ^ b) & (a ^ result)) & 0x80 else False
+        result = np.uint8(result)
+        self.r_status["flag_V"] = True if (~(value ^ result) & (a ^ result)) & 0x80 else False
+        self.r_accumulator = result
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def SEC(self, mode: AddressingMode):

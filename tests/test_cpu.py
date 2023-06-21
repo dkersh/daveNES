@@ -8,7 +8,7 @@ import cpu
 all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()] # Get list of all op-codes
 json_test = lambda x: f'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
 all_json_files = [json_test(c) for c in all_op_codes] # Create list of all appropriate test files
-num_of_test_files = 10
+num_of_test_files = 50
 
 json_files_reshaped = np.repeat(all_json_files, num_of_test_files)
 inds = np.ravel([np.arange(num_of_test_files).tolist() for i in range(len(all_json_files))])
