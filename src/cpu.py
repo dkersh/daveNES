@@ -234,6 +234,7 @@ class MOS6502:
             self.step_program()
 
             if self.break_flag:
+                print('program ending')
                 break
     
     '''
@@ -400,7 +401,7 @@ class MOS6502:
 
     def stack_pop(self) -> np.uint8:
         self.r_stack_pointer += np.uint8(1)
-        return self.ram.read(np.uint16(0x1000) + np.uint16(self.r_stack_pointer))
+        return self.ram.read(np.uint16(0x0100) + np.uint16(self.r_stack_pointer))
 
     def stack_pop_u16(self) -> np.uint16:
         lo = np.uint16(self.stack_pop())
@@ -409,7 +410,7 @@ class MOS6502:
         return np.uint16(hi << 8 | lo)
 
     def stack_push(self, data: np.uint8):
-        self.ram.write(np.uint16(0x1000) + np.uint16(self.r_stack_pointer), data)
+        self.ram.write(np.uint16(0x0100) + np.uint16(self.r_stack_pointer), data)
         self.r_stack_pointer -= np.uint8(1)
 
     def stack_push_u16(self, data: np.uint16):
@@ -477,7 +478,7 @@ class MOS6502:
             self.r_accumulator = np.uint8(shifted)
         else:
             self.ram.write(addr, np.uint8(shifted))
-        self.update_zero_and_negative_flags(self.r_accumulator)
+        self.update_zero_and_negative_flags(shifted)
 
     def BCC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -506,8 +507,8 @@ class MOS6502:
         result = self.r_accumulator & value
 
         self.r_status["flag_Z"] = True if result == 0 else False
-        self.r_status["flag_V"] = bool(result & 0b0100_0000)
-        self.r_status["flag_N"] = bool(result >> 7)
+        self.r_status["flag_V"] = bool(value & 0b0100_0000)
+        self.r_status["flag_N"] = bool(value & 0b1000_0000)
 
     def BMI(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -566,32 +567,32 @@ class MOS6502:
     def CMP(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = self.r_accumulator - value
+        result = np.uint8(self.r_accumulator) - value
 
         #print(f'r_a: {self.r_accumulator}, value: {value}')
         #print(f'The result is {result}')
 
         self.r_status["flag_C"] = True if self.r_accumulator >= value else False
         self.r_status["flag_Z"] = True if self.r_accumulator == value else False
-        self.r_status["flag_N"] = bool(result >> 7)
+        self.r_status["flag_N"] = bool(result & 0b1000_0000)
 
     def CPX(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = self.r_index_X - value
+        result = np.uint8(self.r_index_X) - value
 
         self.r_status["flag_C"] = True if self.r_index_X >= value else False
         self.r_status["flag_Z"] = True if self.r_index_X == value else False
-        self.r_status["flag_N"] = bool(result >> 7)
+        self.r_status["flag_N"] = bool(result & 0b1000_0000)
 
     def CPY(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
-        result = self.r_index_Y - value
+        result = np.uint8(self.r_index_Y) - value
 
         self.r_status["flag_C"] = True if self.r_index_Y >= value else False
         self.r_status["flag_Z"] = True if self.r_index_Y == value else False
-        self.r_status["flag_N"] = bool(result >> 7)
+        self.r_status["flag_N"] = bool(result & 0b1000_0000)
 
     def DEC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -705,7 +706,7 @@ class MOS6502:
 
     def PHA(self, mode: AddressingMode):
         self.stack_push(self.r_accumulator)
-        self.update_zero_and_negative_flags(self.r_accumulator)
+        #self.update_zero_and_negative_flags(self.r_accumulator)
 
     def PHP(self, mode: AddressingMode):
         raise NotImplementedError
@@ -725,9 +726,9 @@ class MOS6502:
         old_carry = self.r_status['flag_C']
 
         if value >> 7 == 1:
-            self.r_status['flag_C'] == True
+            self.r_status['flag_N'] == True
         else:
-            self.r_status['flag_C'] == False
+            self.r_status['flag_N'] == False
 
         value = value << 1
         if old_carry:
