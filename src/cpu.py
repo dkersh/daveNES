@@ -214,7 +214,7 @@ class MOS6502:
     def step_program(self) -> bool:
         # TODO: Gravitate towards a step program paradigm.
         # Random value required for Snake program
-        # self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
         if self.debug:
             self.ram.visualise_memory()
@@ -237,7 +237,7 @@ class MOS6502:
                 print('program ending')
                 break
     
-    '''
+    
     def run_program(self) -> None:
         # Set up pygame
         # TODO: Offload to a different class
@@ -288,7 +288,7 @@ class MOS6502:
 
             # time.sleep(0.0000001)
         pygame.quit()
-    '''
+    
 
     def reset(self) -> None:
         self.r_program_counter = self.ram.read_u16(0xFFFC)
@@ -465,6 +465,7 @@ class MOS6502:
         self.update_zero_and_negative_flags(self.r_accumulator)
 
     def ASL(self, mode: AddressingMode):
+        # TODO: Should probably split this up into accumulator / non accumulator
         if mode == AddressingMode.ACCUMULATOR:
             value = self.get_operand_address(mode)
         else:
@@ -476,11 +477,13 @@ class MOS6502:
 
         if mode == AddressingMode.ACCUMULATOR:
             self.r_accumulator = np.uint8(shifted)
+            self.update_zero_and_negative_flags(np.uint8(shifted))
+            if self.r_accumulator == 0:
+                self.r_status['flag_Z'] = True
         else:
             self.ram.write(addr, np.uint8(shifted))
-        self.update_zero_and_negative_flags(np.uint8(shifted))
-        if self.r_accumulator == 0:
-            self.r_status['flag_Z'] = True
+            self.update_zero_and_negative_flags(np.uint8(shifted))
+        
 
     def BCC(self, mode: AddressingMode):
         addr = self.get_operand_address(mode)
@@ -758,12 +761,15 @@ class MOS6502:
 
         
 
-        result = a + (~b + self.r_status['flag_C'])
+        #print(result := a + (~b + self.r_status['flag_C']))
+        #print(result := a + (~b + (not self.r_status['flag_C'])) + 1)
+        print(result := a + (b ^ 0x00FF) + self.r_status['flag_C']) # http://forum.6502.org/viewtopic.php?p=37758#p37758
 
-        print(f'{value =}')
-        print(f'{a =}')
-        print(f'{b =}')
-        print(f'{result =}')
+        #print(f'{value =}')
+        #print(f'{a =}')
+        #print(f'{b =}')
+        #print(f'{result =}')
+        #print(f'{self.r_status["flag_C"] = }')
 
         # Setting Flags
         self.r_status["flag_C"] = True if result > 255 else False
