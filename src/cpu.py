@@ -221,14 +221,15 @@ class MOS6502:
             input("Press Button to continue")
 
         opcode = self.ram.read(self.r_program_counter)  # Code from program
-        print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
-        self.print_system()
+        #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+        #self.print_system()
 
         self.r_program_counter += 1
         f = self.lookup_table[opcode][0]
         a = self.lookup_table[opcode][2]
         f(a) # run the opcode with the specified addressing mode
 
+    '''
     def run_program(self) -> None:
         while True:
             self.step_program()
@@ -236,7 +237,7 @@ class MOS6502:
             if self.break_flag:
                 print('program ending')
                 break
-    
+    '''
     
     def run_program(self) -> None:
         # Set up pygame
@@ -245,6 +246,8 @@ class MOS6502:
 
         # For the snake program
         pygame.init()
+        # Speed up pygame
+        pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN])
         screen = pygame.display.set_mode((320, 320))
         data = np.zeros(32*32)
         pygame.display.update()
@@ -254,6 +257,25 @@ class MOS6502:
             
             # This is Explicitly for the snake program
             for event in pygame.event.get():
+                match event.type:
+                    case pygame.QUIT:
+                        self.break_flag = True
+                        break
+                    case pygame.KEYDOWN:
+                        match event.key:
+                            case pygame.K_UP:
+                                self.ram.write(0xff, 0x77)
+                            case pygame.K_RIGHT:
+                                self.ram.write(0xff, 0x61)
+                            case pygame.K_LEFT:
+                                self.ram.write(0xff, 0x64)
+                            case pygame.K_DOWN:
+                                self.ram.write(0xff, 0x73)
+
+
+
+
+                '''
                 if event.type == pygame.QUIT:
                     self.break_flag = True
                     break
@@ -271,6 +293,7 @@ class MOS6502:
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
                     print('DOWN PRESSED')
                     self.ram.write(0xff, 0x73)
+                '''
 
             if np.all(data == self.ram.memory[0x0200:0x05FF+1]) == False:
                 data = self.ram.memory[0x0200:0x05FF+1]
@@ -286,7 +309,7 @@ class MOS6502:
         
         #
 
-            # time.sleep(0.0000001)
+            time.sleep(0.0000001)
         pygame.quit()
     
 
@@ -438,15 +461,12 @@ class MOS6502:
     # ----------------------------------------------------------------
 
     def ADC(self, mode: AddressingMode):
-        print(f'ADC - PC: {self.r_program_counter}')
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
 
         a = np.uint16(self.r_accumulator)
         m = np.uint16(value)
         c = np.uint16(self.r_status["flag_C"])
-
-        print(f'{a}, {m}, {c}')
 
         result = a + m + c
 
@@ -751,7 +771,6 @@ class MOS6502:
         self.r_program_counter = value + np.uint8(1)
 
     def SBC(self, mode: AddressingMode):
-        print('SBC performed')
         # A-B = A + (-B) and -B = !B + 1
         addr = self.get_operand_address(mode)
         value = self.ram.read(addr)
@@ -763,7 +782,8 @@ class MOS6502:
 
         #print(result := a + (~b + self.r_status['flag_C']))
         #print(result := a + (~b + (not self.r_status['flag_C'])) + 1)
-        print(result := a + (b ^ 0x00FF) + self.r_status['flag_C']) # http://forum.6502.org/viewtopic.php?p=37758#p37758
+        #print(result := a + (b ^ 0x00FF) + self.r_status['flag_C']) # http://forum.6502.org/viewtopic.php?p=37758#p37758
+        result = a + (b ^ 0x00FF) + self.r_status['flag_C']
 
         #print(f'{value =}')
         #print(f'{a =}')
