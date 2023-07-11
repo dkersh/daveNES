@@ -212,7 +212,6 @@ class MOS6502:
         self.reset()
 
     def step_program(self) -> bool:
-        # TODO: Gravitate towards a step program paradigm.
         # Random value required for Snake program
         self.ram.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
@@ -265,51 +264,32 @@ class MOS6502:
                         match event.key:
                             case pygame.K_UP:
                                 self.ram.write(0xff, 0x77)
+                                print('UP PRESSED')
                             case pygame.K_RIGHT:
                                 self.ram.write(0xff, 0x61)
+                                print('RIGHT PRESSED')
                             case pygame.K_LEFT:
                                 self.ram.write(0xff, 0x64)
+                                print('LEFT PRESSED')
                             case pygame.K_DOWN:
                                 self.ram.write(0xff, 0x73)
+                                print('DOWN PRESSED')
 
-
-
-
-                '''
-                if event.type == pygame.QUIT:
-                    self.break_flag = True
-                    break
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-                    print('UP PRESSED')
-                    #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
-                    #self.print_system()
-                    self.ram.write(0xff, 0x77)
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-                    print('RIGHT PRESSED')
-                    self.ram.write(0xff, 0x61)
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
-                    print('LEFT PRESSED')
-                    self.ram.write(0xff, 0x64)
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
-                    print('DOWN PRESSED')
-                    self.ram.write(0xff, 0x73)
-                '''
-
+            # Render to screen if there's a change between the data var and the appropriate memory address.
             if np.all(data == self.ram.memory[0x0200:0x05FF+1]) == False:
-                data = self.ram.memory[0x0200:0x05FF+1]
-                data = np.reshape(data, (32, 32))
-                surf = pygame.surfarray.make_surface(data)
+                #print('updating display')
+                time.sleep(0.05)
+                data = np.copy(self.ram.memory[0x0200:0x05FF+1])
+                data_r = np.reshape(data, (32, 32))
+                surf = pygame.surfarray.make_surface(data_r)
                 scaled_surf = pygame.transform.scale(surf, (320, 320))
                 screen.blit(scaled_surf, (0, 0))
                 screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
                 pygame.display.update()
-
+                
             if self.break_flag == True:
                 break
         
-        #
-
-            time.sleep(0.0000001)
         pygame.quit()
     
 
