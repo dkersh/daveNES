@@ -246,13 +246,18 @@ class MOS6502:
 
             case AddressingMode.INDIRECT_Y:
                 base = self.bus.read(self.r_program_counter)
+                print(f'base: {base}')
                 self.r_program_counter += 1
 
-                lo = self.bus.read(base.astype(np.uint16))
-                hi = self.bus.read(
-                    (base + np.uint8(1)).astype(np.uint16)
+                lo = self.bus.read(base)
+                hi = self.bus.read((base + np.uint8(1))
                 )  # Wrapping Add (may throw overflow exception)
-                deref_base = np.uint16(hi) << 8 | np.uint16(lo)
+                deref_base = hi << 8 | lo
+
+                print(f'lo: {lo}')
+                print(f'hi: {hi}')
+                print(f'deref_base: {deref_base}')
+                print(f'y_register: {self.r_index_Y}')
 
                 return np.uint16(deref_base) + np.uint16(
                     self.r_index_Y
@@ -271,11 +276,11 @@ class MOS6502:
                 self.r_program_counter += 1
                 return value
     
-    def value_to_status(self, value) -> None:
+    def value_to_status(self, value: np.uint8) -> None:
         """Convert a number into the booleans for the status register; useful for testing.
 
         Args:
-            value (_type_): _description_
+            value (np.uint8): status number
         """
         for i, f in enumerate(self.r_status):
             self.r_status[f] = value & (1 << i) != 0

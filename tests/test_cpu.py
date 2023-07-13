@@ -2,11 +2,11 @@ import json
 import pytest
 import numpy as np
 import sys
-#sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
-from ..src.cpu import cpu
+sys.path.append('/Users/davidkersh/Documents/Other_Work/Coding/daveNES/src')
+import cpu
 
 all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()] # Get list of all op-codes
-json_test = lambda x: f'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
+json_test = lambda x: f'/Users/davidkersh/Documents/Other_Work/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
 all_json_files = [json_test(c) for c in all_op_codes] # Create list of all appropriate test files
 num_of_test_files = 50
 
@@ -38,13 +38,13 @@ def init_daveNES(test: dict):
     Returns:
         daveNES: Initialised daveNES object.
     """
-    daveNES = cpu.MOS6502(debug = False)
-    daveNES.initialise_RAM()
+    daveNES = cpu.MOS6502()
+    daveNES.connect_to_bus()
 
     # Load test program
     for val in test['initial']['ram']:
         print(f'{val[0]}, {val[1]}')
-        daveNES.ram.memory[val[0]] = np.uint8(val[1])
+        daveNES.bus.wram.memory[val[0]] = np.uint8(val[1])
     daveNES.r_program_counter = test['initial']['pc']
     daveNES.r_stack_pointer = test['initial']['s']
     daveNES.r_accumulator = test['initial']['a']
