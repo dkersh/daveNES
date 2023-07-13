@@ -2,8 +2,8 @@ import json
 import pytest
 import numpy as np
 import sys
-sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
-import cpu
+#sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
+from ..src.cpu import cpu
 
 all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()] # Get list of all op-codes
 json_test = lambda x: f'C:/Users/David/Documents/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'

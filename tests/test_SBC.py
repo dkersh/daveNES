@@ -2,8 +2,9 @@ import json
 import pytest
 import numpy as np
 import sys
-sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
-import cpu
+#sys.path.append('C:/Users/David/Documents/Coding/daveNES/src')
+#sys.path.append('/Users/davidkersh/Documents/Other_Work/Coding/daveNES/src')
+import cpu.cpu as cpu
 
 num_of_tests = 500
 sbc_opcodes = ['e9', 'e5', 'f5', 'ed', 'fd', 'f9', 'e1', 'f1']

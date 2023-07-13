@@ -8,12 +8,15 @@ import time
 
 class Memory:
     def __init__(self):
-        self.memory = np.zeros(0xFFFF, dtype=np.uint8)
+        """Memory class for imitating the Working Random Access Memory (WRAM) of the
+        NES.
+        """
+        self.memory = np.zeros(0x0800, dtype=np.uint8)
 
     def read(self, addr: np.uint16) -> np.uint8:
         return self.memory[addr]
 
-    def write(self, addr: np.uint16, data: np.uint8) -> bool:
+    def write(self, addr: np.uint8, data: np.uint8) -> bool:
         try:
             self.memory[addr] = data
         except:
