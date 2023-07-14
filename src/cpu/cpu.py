@@ -111,7 +111,7 @@ class MOS6502:
         pygame.init()
         # Speed up pygame
         pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN])
-        screen = pygame.display.set_mode((320, 320))
+        screen = pygame.display.set_mode((640, 640))
         data = np.zeros(32*32)
         pygame.display.update()
 
@@ -141,12 +141,15 @@ class MOS6502:
 
             # Render to screen if there's a change between the data var and the appropriate memory address.
             if np.all(data == self.bus.wram.memory[0x0200:0x05FF+1]) == False:
-                #print('updating display')
                 time.sleep(0.05)
                 data = np.copy(self.bus.wram.memory[0x0200:0x05FF+1])
-                data_r = np.reshape(data, (32, 32))
+                # Change background to white
+                data_c = np.copy(data)
+                data_c[data_c == 0] = 255
+                #
+                data_r = np.reshape(data_c, (32, 32))
                 surf = pygame.surfarray.make_surface(data_r)
-                scaled_surf = pygame.transform.scale(surf, (320, 320))
+                scaled_surf = pygame.transform.scale(surf, (640, 640))
                 screen.blit(scaled_surf, (0, 0))
                 screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
                 pygame.display.update()
@@ -246,18 +249,12 @@ class MOS6502:
 
             case AddressingMode.INDIRECT_Y:
                 base = self.bus.read(self.r_program_counter)
-                print(f'base: {base}')
                 self.r_program_counter += 1
 
                 lo = self.bus.read(base)
                 hi = self.bus.read((base + np.uint8(1))
                 )  # Wrapping Add (may throw overflow exception)
                 deref_base = hi << 8 | lo
-
-                print(f'lo: {lo}')
-                print(f'hi: {hi}')
-                print(f'deref_base: {deref_base}')
-                print(f'y_register: {self.r_index_Y}')
 
                 return np.uint16(deref_base) + np.uint16(
                     self.r_index_Y

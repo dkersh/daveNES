@@ -3,6 +3,9 @@ from memory import Memory
 
 class Bus:
     def __init__(self) -> None:
+        """Main for component interfacing.
+        TODO: Implement memory mirroring for RAM.
+        """
         self.wram = Memory()
         self.vram = None
 
