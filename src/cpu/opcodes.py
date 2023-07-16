@@ -1,4 +1,5 @@
 from .cpu import AddressingMode
+#from .cpu import MOS6502
 import numpy as np
 
 class MOS6502_OpCodes():
@@ -426,6 +427,7 @@ class MOS6502_OpCodes():
         self.cpu.update_zero_and_negative_flags(value)
         
     def NOP(self, mode: AddressingMode):
+        # This is supposed to be a pass
         pass
 
     def ORA(self, mode: AddressingMode):
@@ -440,7 +442,7 @@ class MOS6502_OpCodes():
         #self.cpu.update_zero_and_negative_flags(self.cpu.r_accumulator)
 
     def PHP(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.cpu.stack_push(self.cpu.status_to_value())
 
     def PLA(self, mode: AddressingMode):
         self.cpu.r_accumulator = self.cpu.stack_pop()
@@ -451,23 +453,51 @@ class MOS6502_OpCodes():
         self.cpu.value_to_status(value)
 
     def ROL(self, mode: AddressingMode):
-        #TODO: Probably not the correct implementation
-        addr = self.cpu.get_operand_address(mode) 
-        value = self.cpu.bus.read(addr)
+        # Acts different based on Accumulator or Not Addressing Mode
+        if mode == AddressingMode.ACCUMULATOR:
+            value = self.cpu.get_operand_address(mode)
+            print(f'value: {value}')
+        else:
+            addr = self.cpu.get_operand_address(mode)
+            value = self.cpu.bus.read(addr)
+        
         old_carry = self.cpu.r_status['flag_C']
-
         if value >> 7 == 1:
             self.cpu.r_status['flag_N'] == True
         else:
             self.cpu.r_status['flag_N'] == False
 
-        value = value << 1
+        value = np.uint8(value << 1)
+        print(f'new value: {value}')
         if old_carry:
-            value = value | 1
-        self.cpu.bus.write(addr, value)
+            value = value | 0b0000_0001
+        if mode == AddressingMode.ACCUMULATOR:
+            self.cpu.r_accumulator = value
+        else:
+            self.cpu.bus.write(addr, value)
 
     def ROR(self, mode: AddressingMode):
-        raise NotImplementedError
+        # Acts different based on Accumulator or Not Addressing Mode
+        if mode == AddressingMode.ACCUMULATOR:
+            value = self.cpu.get_operand_address(mode)
+            print(f'value: {value}')
+        else:
+            addr = self.cpu.get_operand_address(mode)
+            value = self.cpu.bus.read(addr)
+        
+        old_carry = self.cpu.r_status['flag_C']
+        if value >> 7 == 1:
+            self.cpu.r_status['flag_N'] == True
+        else:
+            self.cpu.r_status['flag_N'] == False
+
+        value = np.uint8(value >> 1)
+        if old_carry:
+            value = value | 0b1000_0000
+        if mode == AddressingMode.ACCUMULATOR:
+            self.cpu.r_accumulator = value
+        else:
+            self.cpu.bus.write(addr, value)
 
     def RTI(self, mode: AddressingMode):
         raise NotImplementedError
@@ -483,8 +513,6 @@ class MOS6502_OpCodes():
 
         a = self.cpu.r_accumulator
         b = np.uint8(value)
-
-        
 
         #print(result := a + (~b + self.cpu.r_status['flag_C']))
         #print(result := a + (~b + (not self.cpu.r_status['flag_C'])) + 1)
@@ -534,7 +562,8 @@ class MOS6502_OpCodes():
         self.cpu.update_zero_and_negative_flags(self.cpu.r_index_Y)
 
     def TSX(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.cpu.r_index_X = self.cpu.r_stack_pointer
+        self.cpu.update_zero_and_negative_flags(self.cpu.r_index_X)
 
     def TXA(self, mode: AddressingMode):
         self.cpu.r_accumulator = self.cpu.r_index_X
@@ -544,4 +573,5 @@ class MOS6502_OpCodes():
         self.cpu.r_stack_pointer = self.r_index_X
 
     def TYA(self, mode: AddressingMode):
-        raise NotImplementedError
+        self.cpu.r_accumulator = self.cpu.r_index_Y
+        self.cpu.update_zero_and_negative_flags(self.cpu.r_accumulator)

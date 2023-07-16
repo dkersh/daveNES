@@ -69,6 +69,7 @@ class MOS6502:
         for i, val in enumerate(program.program):
             self.bus.write(0x0600 + i, val)
         self.bus.write_u16(0x07FE, 0x0600)  # Write the start of the program to addr 0xFFFC
+        #self.bus.write_u16(0x07FE, 0x0600)
         self.reset()
 
     def step_program(self) -> None:
@@ -282,8 +283,13 @@ class MOS6502:
         for i, f in enumerate(self.r_status):
             self.r_status[f] = value & (1 << i) != 0
     
-    def status_to_value(self):
-        raise NotImplementedError
+    def status_to_value(self) -> np.uint8:
+        """Convert the status register (a dict) to a usigned 8 bit integer.
+
+        Returns:
+            np.uint8: integer representation of the status register
+        """
+        return np.uint8(int(''.join(str(int(self.r_status[k])) for k in self.r_status.keys())[::-1], 2))
 
     def stack_pop(self) -> np.uint8:
         self.r_stack_pointer += np.uint8(1)
