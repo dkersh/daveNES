@@ -49,7 +49,6 @@ class MOS6502:
             "flag_N": False,
         }
         self.memory = None
-        self.break_flag = False
 
         # imported from opcodes
         self.opcodes = MOS6502_OpCodes(self)
@@ -68,7 +67,7 @@ class MOS6502:
         """
         for i, val in enumerate(program.program):
             self.bus.write(0x0600 + i, val)
-        self.bus.write_u16(0x07FE, 0x0600)  # Write the start of the program to addr 0xFFFC
+        self.bus.write_u16(0xFFFC, 0x0600)  # Write the start of the program to addr 0xFFFC
         #self.bus.write_u16(0x07FE, 0x0600)
         self.reset()
 
@@ -85,7 +84,7 @@ class MOS6502:
 
         opcode = self.bus.read(self.r_program_counter)
         #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
-        #self.print_system()
+        self.print_system()
 
         self.r_program_counter += 1
         f = self.lookup_table[opcode][0]
@@ -123,22 +122,22 @@ class MOS6502:
             for event in pygame.event.get():
                 match event.type:
                     case pygame.QUIT:
-                        self.break_flag = True
+                        self.r_status["flag_B0"] = True
                         break
                     case pygame.KEYDOWN:
                         match event.key:
                             case pygame.K_UP:
                                 self.bus.write(0xff, 0x77)
-                                print('UP PRESSED')
+                                #print('UP PRESSED')
                             case pygame.K_RIGHT:
                                 self.bus.write(0xff, 0x61)
-                                print('RIGHT PRESSED')
+                                #print('RIGHT PRESSED')
                             case pygame.K_LEFT:
                                 self.bus.write(0xff, 0x64)
-                                print('LEFT PRESSED')
+                                #print('LEFT PRESSED')
                             case pygame.K_DOWN:
                                 self.bus.write(0xff, 0x73)
-                                print('DOWN PRESSED')
+                                #print('DOWN PRESSED')
 
             # Render to screen if there's a change between the data var and the appropriate memory address.
             if np.all(data == self.bus.wram.memory[0x0200:0x05FF+1]) == False:
@@ -153,9 +152,27 @@ class MOS6502:
                 scaled_surf = pygame.transform.scale(surf, (640, 640))
                 screen.blit(scaled_surf, (0, 0))
                 screen.blit(pygame.transform.rotate(screen, -90), (0, 0))
+                #
+                # add program status
+                #
+                font = pygame.font.Font(None, 20)
+                text = (f"PC: 0x{self.r_program_counter:04x}, "
+                    f"SP: 0x{self.r_stack_pointer:02x}, "
+                    f"A: 0x{self.r_accumulator:02x}, "
+                    f"X: 0x{self.r_index_X:02x}, "
+                    f"Y: 0x{self.r_index_Y:02x}, "
+                    f"{[int(self.r_status[k]) for k in self.r_status.keys()][::-1]}")
+                text_surface = font.render(text, True, (255, 0, 0))
+                text_rect = text_surface.get_rect()
+                text_rect.topleft = (25, 25)
+                screen.blit(text_surface, text_rect)
+                #
+                #
+                #
+
                 pygame.display.update()
                 
-            if self.break_flag == True:
+            if self.r_status["flag_B0"] == True:
                 break
         
         pygame.quit()
@@ -164,7 +181,7 @@ class MOS6502:
     def reset(self) -> None:
         """Reset the CPU, setting all registers and status to default.
         """
-        self.r_program_counter = self.bus.read_u16(0x07FE) #0xFFFC
+        self.r_program_counter = self.bus.read_u16(0xFFFC) #0xFFFC
         self.r_stack_pointer = np.uint8(0xFF)
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
@@ -175,16 +192,11 @@ class MOS6502:
         self.r_status["flag_B1"] = True
         ###
 
-        self.break_flag = False
-
     def get_operand_address(self, mode: AddressingMode) -> np.uint16:
         """Return the address from a respective operation based on the addressing mode used.
 
         Args:
             mode (AddressingMode): Addressing Mode identified in the op-code
-
-        Raises:
-            NotImplementedError: AddressingMode not implemented as of yet.
 
         Returns:
             np.uint16: Address returned as a result of the addressingmode specified.
@@ -328,5 +340,6 @@ class MOS6502:
             f"A: 0x{self.r_accumulator:02x}, "
             f"X: 0x{self.r_index_X:02x}, "
             f"Y: 0x{self.r_index_Y:02x}, "
-            f"{[int(self.r_status[k]) for k in self.r_status.keys()][::-1]}"
+            f"{self.status_to_value()}",
+            end='\r'
         )

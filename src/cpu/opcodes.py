@@ -266,7 +266,6 @@ class MOS6502_OpCodes():
 
     def BRK(self, mode: AddressingMode):
         print('BREAK')
-        self.cpu.break_flag = True
         self.cpu.r_status['flag_B0'] = True
         self.cpu.r_program_counter += 1
 
@@ -570,7 +569,7 @@ class MOS6502_OpCodes():
         self.cpu.update_zero_and_negative_flags(self.cpu.r_accumulator)
 
     def TXS(self, mode: AddressingMode):
-        self.cpu.r_stack_pointer = self.r_index_X
+        self.cpu.r_stack_pointer = self.cpu.r_index_X
 
     def TYA(self, mode: AddressingMode):
         self.cpu.r_accumulator = self.cpu.r_index_Y

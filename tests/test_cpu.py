@@ -6,6 +6,7 @@ sys.path.append('/Users/davidkersh/Documents/Other_Work/Coding/daveNES/src')
 import cpu
 
 all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()] # Get list of all op-codes
+all_op_codes.remove('00') # remove BRK
 json_test = lambda x: f'/Users/davidkersh/Documents/Other_Work/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
 all_json_files = [json_test(c) for c in all_op_codes] # Create list of all appropriate test files
 num_of_test_files = 50
