@@ -23,8 +23,10 @@ class AddressingMode(Enum):
     ACCUMULATOR = auto()
     RELATIVE = auto()
 
+
 from .opcodes import MOS6502_OpCodes
 from .bus import Bus
+
 
 class MOS6502:
     def __init__(self) -> None:
@@ -55,8 +57,7 @@ class MOS6502:
         self.lookup_table = self.opcodes.lookup_table
 
     def connect_to_bus(self) -> None:
-        """Initiate the Bus and attach to CPU object. Could probably be made part of the init method.
-        """
+        """Initiate the Bus and attach to CPU object. Could probably be made part of the init method."""
         self.bus = Bus()
 
     def load_program(self, program: Program) -> None:
@@ -68,7 +69,7 @@ class MOS6502:
         for i, val in enumerate(program.program):
             self.bus.write(0x0600 + i, val)
         self.bus.write_u16(0xFFFC, 0x0600)  # Write the start of the program to addr 0xFFFC
-        #self.bus.write_u16(0x07FE, 0x0600)
+        # self.bus.write_u16(0x07FE, 0x0600)
         self.reset()
 
     def step_program(self) -> None:
@@ -80,18 +81,18 @@ class MOS6502:
         """
 
         # Random value required for Snake program
-        # self.bus.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        self.bus.write(0xFE, np.random.randint(1, 16, dtype=np.uint8))  # random value to memory
 
         opcode = self.bus.read(self.r_program_counter)
-        #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
+        # print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
         self.print_system()
 
         self.r_program_counter += 1
         f = self.lookup_table[opcode][0]
         a = self.lookup_table[opcode][2]
-        f(a) # run the opcode with the specified addressing mode
+        f(a)  # run the opcode with the specified addressing mode
 
-    '''
+    """
     def run_program(self) -> None:
         while True:
             self.step_program()
@@ -99,8 +100,8 @@ class MOS6502:
             if self.break_flag:
                 print('program ending')
                 break
-    '''
-    
+    """
+
     def run_program(self) -> None:
         """Execute the program loaded into memory. This method is more elaborate
         as due to the snake game, we wish to render a region of memory to the screen.
@@ -112,12 +113,12 @@ class MOS6502:
         # Speed up pygame
         pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN])
         screen = pygame.display.set_mode((640, 640))
-        data = np.zeros(32*32)
+        data = np.zeros(32 * 32)
         pygame.display.update()
 
         while True:
             self.step_program()
-            
+
             # This is Explicitly for the snake program
             for event in pygame.event.get():
                 match event.type:
@@ -127,22 +128,22 @@ class MOS6502:
                     case pygame.KEYDOWN:
                         match event.key:
                             case pygame.K_UP:
-                                self.bus.write(0xff, 0x77)
-                                #print('UP PRESSED')
+                                self.bus.write(0xFF, 0x77)
+                                # print('UP PRESSED')
                             case pygame.K_RIGHT:
-                                self.bus.write(0xff, 0x61)
-                                #print('RIGHT PRESSED')
+                                self.bus.write(0xFF, 0x61)
+                                # print('RIGHT PRESSED')
                             case pygame.K_LEFT:
-                                self.bus.write(0xff, 0x64)
-                                #print('LEFT PRESSED')
+                                self.bus.write(0xFF, 0x64)
+                                # print('LEFT PRESSED')
                             case pygame.K_DOWN:
-                                self.bus.write(0xff, 0x73)
-                                #print('DOWN PRESSED')
+                                self.bus.write(0xFF, 0x73)
+                                # print('DOWN PRESSED')
 
             # Render to screen if there's a change between the data var and the appropriate memory address.
-            if np.all(data == self.bus.wram.memory[0x0200:0x05FF+1]) == False:
+            if np.all(data == self.bus.wram.memory[0x0200 : 0x05FF + 1]) == False:
                 time.sleep(0.05)
-                data = np.copy(self.bus.wram.memory[0x0200:0x05FF+1])
+                data = np.copy(self.bus.wram.memory[0x0200 : 0x05FF + 1])
                 # Change background to white
                 data_c = np.copy(data)
                 data_c[data_c == 0] = 255
@@ -156,12 +157,14 @@ class MOS6502:
                 # add program status
                 #
                 font = pygame.font.Font(None, 20)
-                text = (f"PC: 0x{self.r_program_counter:04x}, "
+                text = (
+                    f"PC: 0x{self.r_program_counter:04x}, "
                     f"SP: 0x{self.r_stack_pointer:02x}, "
                     f"A: 0x{self.r_accumulator:02x}, "
                     f"X: 0x{self.r_index_X:02x}, "
                     f"Y: 0x{self.r_index_Y:02x}, "
-                    f"{[int(self.r_status[k]) for k in self.r_status.keys()][::-1]}")
+                    f"{[int(self.r_status[k]) for k in self.r_status.keys()][::-1]}"
+                )
                 text_surface = font.render(text, True, (255, 0, 0))
                 text_rect = text_surface.get_rect()
                 text_rect.topleft = (25, 25)
@@ -171,17 +174,15 @@ class MOS6502:
                 #
 
                 pygame.display.update()
-                
+
             if self.r_status["flag_B0"] == True:
                 break
-        
+
         pygame.quit()
-    
 
     def reset(self) -> None:
-        """Reset the CPU, setting all registers and status to default.
-        """
-        self.r_program_counter = self.bus.read_u16(0xFFFC) #0xFFFC
+        """Reset the CPU, setting all registers and status to default."""
+        self.r_program_counter = self.bus.read_u16(0xFFFC)  # 0xFFFC
         self.r_stack_pointer = np.uint8(0xFF)
         self.r_accumulator = np.uint8(0)
         self.r_index_X = np.uint8(0)
@@ -215,17 +216,13 @@ class MOS6502:
 
             case AddressingMode.ZERO_PAGE_X:
                 pos = self.bus.read(self.r_program_counter)
-                value = (
-                    pos + self.r_index_X
-                )  # Wrapping Add (may throw overflow exception)
+                value = pos + self.r_index_X  # Wrapping Add (may throw overflow exception)
                 self.r_program_counter += 1
                 return np.uint8(value)
 
             case AddressingMode.ZERO_PAGE_Y:
                 pos = self.bus.read(self.r_program_counter)
-                value = (
-                    pos + self.r_index_Y
-                )  # Wrapping Add (may throw overflow exception)
+                value = pos + self.r_index_Y  # Wrapping Add (may throw overflow exception)
                 self.r_program_counter += 1
                 return np.uint8(value)
 
@@ -237,7 +234,7 @@ class MOS6502:
             case AddressingMode.ABSOLUTE_X:
                 base = self.bus.read_u16(self.r_program_counter)
                 self.r_program_counter += 2
-                return base + np.uint16(self.r_index_X) # Wrapping Add (may throw overflow exception)
+                return base + np.uint16(self.r_index_X)  # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.ABSOLUTE_Y:
                 base = self.bus.read_u16(self.r_program_counter)
@@ -265,27 +262,24 @@ class MOS6502:
                 self.r_program_counter += 1
 
                 lo = self.bus.read(base)
-                hi = self.bus.read((base + np.uint8(1))
-                )  # Wrapping Add (may throw overflow exception)
+                hi = self.bus.read((base + np.uint8(1)))  # Wrapping Add (may throw overflow exception)
                 deref_base = hi << 8 | lo
 
-                return np.uint16(deref_base) + np.uint16(
-                    self.r_index_Y
-                )  # Wrapping Add (may throw overflow exception)
+                return np.uint16(deref_base) + np.uint16(self.r_index_Y)  # Wrapping Add (may throw overflow exception)
 
             case AddressingMode.IMPLICIT:
                 # TODO: Technically, this should be trivial.
                 raise NotImplementedError
-            
+
             case AddressingMode.ACCUMULATOR:
                 value = self.r_accumulator
                 return value
-            
+
             case AddressingMode.RELATIVE:
                 value = self.r_program_counter
                 self.r_program_counter += 1
                 return value
-    
+
     def value_to_status(self, value: np.uint8) -> None:
         """Convert a number into the booleans for the status register; useful for testing.
 
@@ -294,14 +288,14 @@ class MOS6502:
         """
         for i, f in enumerate(self.r_status):
             self.r_status[f] = value & (1 << i) != 0
-    
+
     def status_to_value(self) -> np.uint8:
         """Convert the status register (a dict) to a usigned 8 bit integer.
 
         Returns:
             np.uint8: integer representation of the status register
         """
-        return np.uint8(int(''.join(str(int(self.r_status[k])) for k in self.r_status.keys())[::-1], 2))
+        return np.uint8(int("".join(str(int(self.r_status[k])) for k in self.r_status.keys())[::-1], 2))
 
     def stack_pop(self) -> np.uint8:
         self.r_stack_pointer += np.uint8(1)
