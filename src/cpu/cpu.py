@@ -80,7 +80,7 @@ class MOS6502:
         """
 
         # Random value required for Snake program
-        self.bus.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
+        # self.bus.write(0xfe, np.random.randint(1, 16, dtype=np.uint8)) # random value to memory
 
         opcode = self.bus.read(self.r_program_counter)
         #print(f'{hex(opcode)}, {self.lookup_table[opcode][3]}')
@@ -341,5 +341,4 @@ class MOS6502:
             f"X: 0x{self.r_index_X:02x}, "
             f"Y: 0x{self.r_index_Y:02x}, "
             f"{self.status_to_value()}",
-            end='\r'
         )

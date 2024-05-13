@@ -17,7 +17,7 @@ class Memory:
     def read(self, addr: np.uint16) -> np.uint8:
         return self.memory[addr]
 
-    def write(self, addr: np.uint8, data: np.uint8) -> bool:
+    def write(self, addr: np.uint16, data: np.uint8) -> bool:
         try:
             self.memory[addr] = data
         except:
