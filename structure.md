@@ -45,6 +45,10 @@ classDiagram
         read_u16(np.uint16 addr) np.uint16
     }
 
+    class PPU{
+        %% Unimplemented Picture Processing Unit
+    }
+
     class AddressingMode{
         <<Enumeration>>
         IMMEDIATE
@@ -150,5 +154,6 @@ classDiagram
     MOS6502_OpCodes <.. AddressingMode
     MOS6502 <..> Bus
     Memory <..> Bus
+    PPU <..> Bus
     MOS6502 <.. MOS6502_OpCodes
 ```
