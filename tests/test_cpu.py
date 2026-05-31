@@ -3,9 +3,9 @@ import pytest
 import numpy as np
 import sys
 sys.path.append('/Users/davidkersh/Documents/Other_Work/Coding/daveNES/src')
-import cpu
+import daveNes
 
-all_op_codes = [str(f'{k:02x}') for k in cpu.MOS6502().lookup_table.keys()] # Get list of all op-codes
+all_op_codes = [str(f'{k:02x}') for k in daveNes.MOS6502().lookup_table.keys()] # Get list of all op-codes
 all_op_codes.remove('00') # remove BRK
 json_test = lambda x: f'/Users/davidkersh/Documents/Other_Work/Coding/daveNES/tests/ProcessorTests-main/nes6502/v1/{x}.json'
 all_json_files = [json_test(c) for c in all_op_codes] # Create list of all appropriate test files
@@ -39,7 +39,7 @@ def init_daveNES(test: dict):
     Returns:
         daveNES: Initialised daveNES object.
     """
-    daveNES = cpu.MOS6502()
+    daveNES = daveNes.MOS6502()
     daveNES.connect_to_bus()
 
     # Load test program

@@ -3,15 +3,13 @@ import numpy as np
 
 from program import Program
 
-import pygame
-import time
 
 class Memory:
     def __init__(self):
         """Memory class for imitating the Working Random Access Memory (WRAM) of the
         NES.
         """
-        #self.memory = np.zeros(0x0800, dtype=np.uint8)
+        # self.memory = np.zeros(0x0800, dtype=np.uint8)
         self.memory = np.zeros(0xFFFF, dtype=np.uint8)
 
     def read(self, addr: np.uint16) -> np.uint8:
@@ -25,8 +23,8 @@ class Memory:
         return True
 
     def read_u16(self, addr: np.uint16) -> np.uint16:
-        lo = np.uint16(self.read(addr))
-        hi = np.uint16(self.read(addr + 1))
+        lo = np.uint8(self.read(addr))
+        hi = np.uint8(self.read(addr + 1))
 
         return np.uint16((hi << 8) | lo)
 
